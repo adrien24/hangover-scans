@@ -18,6 +18,11 @@ export default {
 			}
 		},
 		extend: {
+			backgroundImage: {
+				'gradient-hero': 'var(--gradient-hero)',
+				'gradient-card': 'var(--gradient-card)',
+				'gradient-orange': 'var(--gradient-orange)'
+			},
 			colors: {
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
@@ -51,6 +56,13 @@ export default {
 				card: {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
+				},
+				manga: {
+					orange: 'hsl(var(--manga-orange))',
+					'orange-hover': 'hsl(var(--manga-orange-hover))',
+					dark: 'hsl(var(--manga-dark))',
+					card: 'hsl(var(--manga-card))',
+					'card-hover': 'hsl(var(--manga-card-hover))'
 				},
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
