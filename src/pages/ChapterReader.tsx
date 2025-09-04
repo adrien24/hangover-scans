@@ -1,41 +1,96 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, ArrowRight, Settings, Bookmark, Share } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/integrations/supabase/client";
 
-// Mock chapter data
-const mockChapterData = {
-  manga: {
-    title: "Attack on Titan",
-    cover: "/src/assets/manga-cover-1.jpg"
-  },
-  chapter: {
-    id: 1,
-    title: "Chapter 1: To You, 2000 Years From Now",
-    pages: 45,
-    uploadDate: "2021-04-09"
-  },
-  pages: Array.from({ length: 45 }, (_, i) => ({
-    id: i + 1,
-    url: `https://via.placeholder.com/800x1200/1a1a2e/eee?text=Page+${i + 1}`,
-    alt: `Page ${i + 1}`
-  }))
-};
+interface Manga {
+  id: number;
+  title: string;
+  thumbnails: string | null;
+}
+
+interface Scan {
+  id: number;
+  title: string | null;
+  description: string | null;
+  images: any;
+  date: string;
+  chapter: number;
+  scan_id: string | null;
+}
 
 const ChapterReader = () => {
   const { mangaId, chapterId } = useParams();
   const [currentPage, setCurrentPage] = useState(1);
   const [isFullscreen, setIsFullscreen] = useState(false);
   
-  const data = mockChapterData;
+  const { data: manga } = useQuery({
+    queryKey: ['manga', mangaId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('Mangas')
+        .select('id, title, thumbnails')
+        .eq('id', parseInt(mangaId!))
+        .single();
+      
+      if (error) throw error;
+      return data as Manga;
+    },
+    enabled: !!mangaId
+  });
+
+  const { data: chapter, isLoading } = useQuery({
+    queryKey: ['chapter', chapterId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('Scans')
+        .select('*')
+        .eq('id', parseInt(chapterId!))
+        .single();
+      
+      if (error) throw error;
+      return data as Scan;
+    },
+    enabled: !!chapterId
+  });
+
+  const pages = chapter?.images ? (Array.isArray(chapter.images) ? chapter.images : Object.values(chapter.images)) : [];
+  
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-4"></div>
+          <p className="text-white">Loading chapter...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!manga || !chapter) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-white mb-4">Chapter not found</h1>
+          <Link to={`/manga/${mangaId}`}>
+            <Button variant="outline" className="border-white text-white hover:bg-white hover:text-black">
+              Return to Chapters
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
   
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
       if (e.key === "ArrowLeft" && currentPage > 1) {
         setCurrentPage(currentPage - 1);
-      } else if (e.key === "ArrowRight" && currentPage < data.pages.length) {
+      } else if (e.key === "ArrowRight" && currentPage < pages.length) {
         setCurrentPage(currentPage + 1);
       } else if (e.key === "f" || e.key === "F") {
         setIsFullscreen(!isFullscreen);
@@ -44,10 +99,10 @@ const ChapterReader = () => {
 
     window.addEventListener("keydown", handleKeyPress);
     return () => window.removeEventListener("keydown", handleKeyPress);
-  }, [currentPage, data.pages.length, isFullscreen]);
+  }, [currentPage, pages.length, isFullscreen]);
 
   const goToNextPage = () => {
-    if (currentPage < data.pages.length) {
+    if (currentPage < pages.length) {
       setCurrentPage(currentPage + 1);
     }
   };
@@ -74,20 +129,20 @@ const ChapterReader = () => {
                 </Link>
                 <div className="flex items-center gap-3">
                   <img 
-                    src={data.manga.cover} 
-                    alt={data.manga.title}
+                    src={manga.thumbnails || '/placeholder.svg'} 
+                    alt={manga.title}
                     className="w-8 h-10 object-cover rounded"
                   />
                   <div>
-                    <h1 className="text-sm font-medium">{data.manga.title}</h1>
-                    <p className="text-xs text-gray-400">{data.chapter.title}</p>
+                    <h1 className="text-sm font-medium">{manga.title}</h1>
+                    <p className="text-xs text-gray-400">{chapter.title || `Chapter ${chapter.chapter}`}</p>
                   </div>
                 </div>
               </div>
               
               <div className="flex items-center gap-2">
                 <Badge variant="outline" className="text-white border-white/20">
-                  {currentPage} / {data.pages.length}
+                  {currentPage} / {pages.length}
                 </Badge>
                 <Button variant="ghost" size="sm" className="text-white hover:bg-white/10">
                   <Bookmark className="w-4 h-4" />
@@ -114,13 +169,19 @@ const ChapterReader = () => {
         <div className="relative max-w-4xl w-full">
           {/* Current Page */}
           <div className="text-center mb-4">
-            <img
-              src={data.pages[currentPage - 1]?.url}
-              alt={data.pages[currentPage - 1]?.alt}
-              className="w-full max-h-[80vh] object-contain mx-auto rounded shadow-2xl"
-              onClick={goToNextPage}
-              style={{ cursor: currentPage < data.pages.length ? 'pointer' : 'default' }}
-            />
+            {pages[currentPage - 1] ? (
+              <img
+                src={pages[currentPage - 1]}
+                alt={`Page ${currentPage}`}
+                className="w-full max-h-[80vh] object-contain mx-auto rounded shadow-2xl"
+                onClick={goToNextPage}
+                style={{ cursor: currentPage < pages.length ? 'pointer' : 'default' }}
+              />
+            ) : (
+              <div className="w-full max-h-[80vh] bg-gray-800 flex items-center justify-center rounded">
+                <p className="text-white">Page not available</p>
+              </div>
+            )}
           </div>
 
           {/* Navigation Arrows */}
@@ -139,7 +200,7 @@ const ChapterReader = () => {
             size="lg"
             className="absolute right-0 top-1/2 transform -translate-y-1/2 translate-x-4 bg-black/50 hover:bg-black/70 text-white"
             onClick={goToNextPage}
-            disabled={currentPage === data.pages.length}
+            disabled={currentPage === pages.length}
           >
             <ArrowRight className="w-6 h-6" />
           </Button>
@@ -159,14 +220,14 @@ const ChapterReader = () => {
           
           <Card className="bg-white/10 border-white/20 px-4 py-2">
             <span className="text-white text-sm font-medium">
-              Page {currentPage} of {data.pages.length}
+              Page {currentPage} of {pages.length}
             </span>
           </Card>
           
           <Button
             variant="outline"
             onClick={goToNextPage}
-            disabled={currentPage === data.pages.length}
+            disabled={currentPage === pages.length}
             className="border-white/20 text-white hover:bg-white/10"
           >
             Next

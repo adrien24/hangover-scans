@@ -1,73 +1,17 @@
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import MangaCard from "./MangaCard";
-import mangaCover1 from "@/assets/manga-cover-1.jpg";
-import mangaCover2 from "@/assets/manga-cover-2.jpg";
-import mangaCover3 from "@/assets/manga-cover-3.jpg";
-import mangaCover4 from "@/assets/manga-cover-4.jpg";
-import mangaCover5 from "@/assets/manga-cover-5.jpg";
-import mangaCover6 from "@/assets/manga-cover-6.jpg";
 
-const mockManga = [
-  {
-    id: "1",
-    title: "Dragon's Fury: The Last Samurai",
-    cover: mangaCover1,
-    genre: "Action",
-    rating: 4.8,
-    chapters: 156,
-    status: "Ongoing" as const,
-    description: "A legendary warrior must protect his village from ancient demons while mastering the forbidden arts of his ancestors."
-  },
-  {
-    id: "2",
-    title: "Magical Academy Chronicles",
-    cover: mangaCover2,
-    genre: "Fantasy",
-    rating: 4.6,
-    chapters: 89,
-    status: "Ongoing" as const,
-    description: "Young Yuki discovers her magical powers and enters a prestigious academy where friendship and magic intertwine."
-  },
-  {
-    id: "3",
-    title: "Shadows of the Gothic Tower",
-    cover: mangaCover3,
-    genre: "Horror",
-    rating: 4.7,
-    chapters: 234,
-    status: "Completed" as const,
-    description: "In a world of darkness and mystery, a hooded figure uncovers ancient secrets that could change everything."
-  },
-  {
-    id: "4",
-    title: "Spring Hearts Academy",
-    cover: mangaCover4,
-    genre: "Romance",
-    rating: 4.5,
-    chapters: 67,
-    status: "Ongoing" as const,
-    description: "A sweet high school romance blooms under cherry blossom trees as two students navigate love and friendship."
-  },
-  {
-    id: "5",
-    title: "Neon Genesis: Future War",
-    cover: mangaCover5,
-    genre: "Sci-Fi",
-    rating: 4.9,
-    chapters: 178,
-    status: "Ongoing" as const,
-    description: "In a cyberpunk future, elite warriors fight for humanity's survival against AI overlords in sprawling neon cities."
-  },
-  {
-    id: "6",
-    title: "Phantom Woods: Dark Legends",
-    cover: mangaCover6,
-    genre: "Supernatural",
-    rating: 4.4,
-    chapters: 145,
-    status: "Ongoing" as const,
-    description: "Supernatural creatures emerge from ancient forests as brave heroes face their darkest fears and hidden powers."
-  }
-];
+interface Manga {
+  id: number;
+  title: string;
+  description: string | null;
+  thumbnails: string | null;
+  linkManga: string | null;
+  color: any;
+  site: string | null;
+  created_at: string;
+}
 
 interface MangaGridProps {
   title: string;
@@ -75,13 +19,75 @@ interface MangaGridProps {
 }
 
 const MangaGrid = ({ title, showAll = false }: MangaGridProps) => {
-  const displayManga = showAll ? mockManga : mockManga.slice(0, 6);
+  const { data: mangas = [], isLoading, error } = useQuery({
+    queryKey: ['mangas'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('Mangas')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data as Manga[];
+    }
+  });
+
+  const { data: scansCount } = useQuery({
+    queryKey: ['scans-count'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('Scans')
+        .select('id, scan_id')
+        .order('scan_id');
+      
+      if (error) throw error;
+      
+      // Count chapters per manga (assuming scan_id relates to manga id)
+      const counts: Record<string, number> = {};
+      data?.forEach(scan => {
+        if (scan.scan_id) {
+          counts[scan.scan_id] = (counts[scan.scan_id] || 0) + 1;
+        }
+      });
+      return counts;
+    }
+  });
+
+  const displayManga = showAll ? mangas : mangas.slice(0, 6);
+
+  if (isLoading) {
+    return (
+      <section className="mb-12">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold text-foreground">{title}</h2>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="bg-muted animate-pulse rounded-lg aspect-[3/4]" />
+          ))}
+        </div>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section className="mb-12">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold text-foreground">{title}</h2>
+        </div>
+        <div className="text-center py-8">
+          <p className="text-muted-foreground">Failed to load manga. Please try again later.</p>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="mb-12">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold text-foreground">{title}</h2>
-        {!showAll && (
+        {!showAll && mangas.length > 6 && (
           <button className="text-primary hover:text-primary/80 font-medium">
             View All →
           </button>
@@ -89,10 +95,26 @@ const MangaGrid = ({ title, showAll = false }: MangaGridProps) => {
       </div>
       
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
-        {displayManga.map((manga, index) => (
-          <MangaCard key={index} {...manga} />
+        {displayManga.map((manga) => (
+          <MangaCard 
+            key={manga.id}
+            id={manga.id.toString()}
+            title={manga.title}
+            cover={manga.thumbnails || '/placeholder.svg'}
+            genre={manga.site || 'Unknown'}
+            rating={4.5} // Default rating since not in DB
+            chapters={scansCount?.[manga.id.toString()] || 0}
+            status="Ongoing" // Default status since not in DB
+            description={manga.description || ''}
+          />
         ))}
       </div>
+      
+      {displayManga.length === 0 && (
+        <div className="text-center py-8">
+          <p className="text-muted-foreground">No manga available yet.</p>
+        </div>
+      )}
     </section>
   );
 };
