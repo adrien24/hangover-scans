@@ -1,9 +1,11 @@
 import { Star, Play, Bookmark } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 interface MangaCardProps {
+  id: string;
   title: string;
   cover: string;
   genre: string;
@@ -14,6 +16,7 @@ interface MangaCardProps {
 }
 
 const MangaCard = ({ 
+  id,
   title, 
   cover, 
   genre, 
@@ -39,10 +42,12 @@ const MangaCard = ({
               {description}
             </p>
             <div className="flex space-x-2">
-              <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground">
-                <Play className="w-4 h-4 mr-1" />
-                Read
-              </Button>
+              <Link to={`/manga/${id}`}>
+                <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                  <Play className="w-4 h-4 mr-1" />
+                  Read
+                </Button>
+              </Link>
               <Button size="sm" variant="secondary" className="bg-white/20 hover:bg-white/30 text-white border-white/20">
                 <Bookmark className="w-4 h-4" />
               </Button>

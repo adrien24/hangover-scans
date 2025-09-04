@@ -8,6 +8,7 @@ import mangaCover6 from "@/assets/manga-cover-6.jpg";
 
 const mockManga = [
   {
+    id: "1",
     title: "Dragon's Fury: The Last Samurai",
     cover: mangaCover1,
     genre: "Action",
@@ -17,6 +18,7 @@ const mockManga = [
     description: "A legendary warrior must protect his village from ancient demons while mastering the forbidden arts of his ancestors."
   },
   {
+    id: "2",
     title: "Magical Academy Chronicles",
     cover: mangaCover2,
     genre: "Fantasy",
@@ -26,6 +28,7 @@ const mockManga = [
     description: "Young Yuki discovers her magical powers and enters a prestigious academy where friendship and magic intertwine."
   },
   {
+    id: "3",
     title: "Shadows of the Gothic Tower",
     cover: mangaCover3,
     genre: "Horror",
@@ -35,6 +38,7 @@ const mockManga = [
     description: "In a world of darkness and mystery, a hooded figure uncovers ancient secrets that could change everything."
   },
   {
+    id: "4",
     title: "Spring Hearts Academy",
     cover: mangaCover4,
     genre: "Romance",
@@ -44,6 +48,7 @@ const mockManga = [
     description: "A sweet high school romance blooms under cherry blossom trees as two students navigate love and friendship."
   },
   {
+    id: "5",
     title: "Neon Genesis: Future War",
     cover: mangaCover5,
     genre: "Sci-Fi",
@@ -53,6 +58,7 @@ const mockManga = [
     description: "In a cyberpunk future, elite warriors fight for humanity's survival against AI overlords in sprawling neon cities."
   },
   {
+    id: "6",
     title: "Phantom Woods: Dark Legends",
     cover: mangaCover6,
     genre: "Supernatural",
