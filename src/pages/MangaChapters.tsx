@@ -33,37 +33,37 @@ const MangaChapters = () => {
       id: 1,
       title: "Attack on Titan",
       description: "Humanity fights for survival against giant humanoid Titans that have brought civilization to the brink of extinction.",
-      thumbnails: "/manga-cover-1.jpg"
+      thumbnails: "/src/assets/manga-cover-1.jpg"
     },
     "2": {
       id: 2,
       title: "One Piece",
       description: "Follow Monkey D. Luffy on his quest to become the Pirate King and find the legendary treasure One Piece.",
-      thumbnails: "/manga-cover-2.jpg"
+      thumbnails: "/src/assets/manga-cover-2.jpg"
     },
     "3": {
       id: 3,
       title: "Demon Slayer",
       description: "Tanjiro Kamado becomes a demon slayer to save his sister and avenge his family.",
-      thumbnails: "/manga-cover-3.jpg"
+      thumbnails: "/src/assets/manga-cover-3.jpg"
     },
     "4": {
       id: 4,
       title: "My Hero Academia",
       description: "In a world where people have superpowers, Izuku Midoriya dreams of becoming the greatest hero.",
-      thumbnails: "/manga-cover-4.jpg"
+      thumbnails: "/src/assets/manga-cover-4.jpg"
     },
     "5": {
       id: 5,
       title: "Jujutsu Kaisen",
       description: "Yuji Itadori joins a secret organization of Jujutsu Sorcerers to kill a powerful curse.",
-      thumbnails: "/manga-cover-5.jpg"
+      thumbnails: "/src/assets/manga-cover-5.jpg"
     },
     "6": {
       id: 6,
       title: "Chainsaw Man",
       description: "Denji becomes the Chainsaw Devil and hunts other devils for the Public Safety Devil Hunters.",
-      thumbnails: "/manga-cover-6.jpg"
+      thumbnails: "/src/assets/manga-cover-6.jpg"
     }
   };
 
@@ -98,37 +98,51 @@ const MangaChapters = () => {
         scan_id: "1"
       }
     ],
-    "2": [
-      {
-        id: 4,
-        title: "Romance Dawn",
-        description: "Luffy begins his journey to become the Pirate King.",
-        images: Array(19).fill("").map((_, i) => `page_${i + 1}.jpg`),
-        date: "2024-01-15",
-        chapter: 1,
-        scan_id: "2"
-      },
-      {
-        id: 5,
-        title: "They Call Him 'Straw Hat Luffy'",
-        description: "Luffy gains his first crew member and his nickname.",
-        images: Array(20).fill("").map((_, i) => `page_${i + 1}.jpg`),
-        date: "2024-01-14",
-        chapter: 2,
-        scan_id: "2"
-      }
-    ],
-    "3": [
-      {
-        id: 6,
-        title: "Cruelty",
-        description: "Tanjiro's family is attacked by demons.",
-        images: Array(51).fill("").map((_, i) => `page_${i + 1}.jpg`),
-        date: "2024-01-15",
-        chapter: 1,
-        scan_id: "3"
-      }
-    ]
+    "2": Array.from({ length: 100 }, (_, i) => ({
+      id: i + 100,
+      title: `Chapter ${i + 1}`,
+      description: `One Piece chapter ${i + 1}`,
+      images: Array(18 + Math.floor(Math.random() * 5)).fill("").map((_, j) => `page_${j + 1}.jpg`),
+      date: new Date(2024, 0, 15 - Math.floor(i / 10)).toISOString().split('T')[0],
+      chapter: i + 1,
+      scan_id: "2"
+    })),
+    "3": Array.from({ length: 30 }, (_, i) => ({
+      id: i + 200,
+      title: `Chapter ${i + 1}`,
+      description: `Demon Slayer chapter ${i + 1}`,
+      images: Array(18 + Math.floor(Math.random() * 5)).fill("").map((_, j) => `page_${j + 1}.jpg`),
+      date: new Date(2024, 0, 15 - i).toISOString().split('T')[0],
+      chapter: i + 1,
+      scan_id: "3"
+    })),
+    "4": Array.from({ length: 40 }, (_, i) => ({
+      id: i + 300,
+      title: `Chapter ${i + 1}`,
+      description: `My Hero Academia chapter ${i + 1}`,
+      images: Array(18 + Math.floor(Math.random() * 5)).fill("").map((_, j) => `page_${j + 1}.jpg`),
+      date: new Date(2024, 0, 15 - i).toISOString().split('T')[0],
+      chapter: i + 1,
+      scan_id: "4"
+    })),
+    "5": Array.from({ length: 25 }, (_, i) => ({
+      id: i + 400,
+      title: `Chapter ${i + 1}`,
+      description: `Jujutsu Kaisen chapter ${i + 1}`,
+      images: Array(18 + Math.floor(Math.random() * 5)).fill("").map((_, j) => `page_${j + 1}.jpg`),
+      date: new Date(2024, 0, 15 - i).toISOString().split('T')[0],
+      chapter: i + 1,
+      scan_id: "5"
+    })),
+    "6": Array.from({ length: 18 }, (_, i) => ({
+      id: i + 500,
+      title: `Chapter ${i + 1}`,
+      description: `Chainsaw Man chapter ${i + 1}`,
+      images: Array(18 + Math.floor(Math.random() * 5)).fill("").map((_, j) => `page_${j + 1}.jpg`),
+      date: new Date(2024, 0, 15 - i).toISOString().split('T')[0],
+      chapter: i + 1,
+      scan_id: "6"
+    }))
   };
 
   const manga = mangaId ? mockMangas[mangaId] : null;

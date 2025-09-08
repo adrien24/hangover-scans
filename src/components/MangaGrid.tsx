@@ -1,4 +1,5 @@
 import MangaCard from "./MangaCard";
+import { useNavigate } from "react-router-dom";
 
 interface Manga {
   id: number;
@@ -17,13 +18,14 @@ interface MangaGridProps {
 }
 
 const MangaGrid = ({ title, showAll = false }: MangaGridProps) => {
+  const navigate = useNavigate();
   // Mock manga data
   const mangas: Manga[] = [
     {
       id: 1,
       title: "Attack on Titan",
       description: "Humanity fights for survival against giant humanoid Titans that have brought civilization to the brink of extinction.",
-      thumbnails: "/manga-cover-1.jpg",
+      thumbnails: "/src/assets/manga-cover-1.jpg",
       linkManga: null,
       color: null,
       site: "Manga Plus",
@@ -33,7 +35,7 @@ const MangaGrid = ({ title, showAll = false }: MangaGridProps) => {
       id: 2,
       title: "One Piece",
       description: "Follow Monkey D. Luffy on his quest to become the Pirate King and find the legendary treasure One Piece.",
-      thumbnails: "/manga-cover-2.jpg",
+      thumbnails: "/src/assets/manga-cover-2.jpg",
       linkManga: null,
       color: null,
       site: "Weekly Shonen Jump",
@@ -43,7 +45,7 @@ const MangaGrid = ({ title, showAll = false }: MangaGridProps) => {
       id: 3,
       title: "Demon Slayer",
       description: "Tanjiro Kamado becomes a demon slayer to save his sister and avenge his family.",
-      thumbnails: "/manga-cover-3.jpg",
+      thumbnails: "/src/assets/manga-cover-3.jpg",
       linkManga: null,
       color: null,
       site: "Weekly Shonen Jump",
@@ -53,7 +55,7 @@ const MangaGrid = ({ title, showAll = false }: MangaGridProps) => {
       id: 4,
       title: "My Hero Academia",
       description: "In a world where people have superpowers, Izuku Midoriya dreams of becoming the greatest hero.",
-      thumbnails: "/manga-cover-4.jpg",
+      thumbnails: "/src/assets/manga-cover-4.jpg",
       linkManga: null,
       color: null,
       site: "Weekly Shonen Jump",
@@ -63,7 +65,7 @@ const MangaGrid = ({ title, showAll = false }: MangaGridProps) => {
       id: 5,
       title: "Jujutsu Kaisen",
       description: "Yuji Itadori joins a secret organization of Jujutsu Sorcerers to kill a powerful curse.",
-      thumbnails: "/manga-cover-5.jpg",
+      thumbnails: "/src/assets/manga-cover-5.jpg",
       linkManga: null,
       color: null,
       site: "Weekly Shonen Jump",
@@ -73,7 +75,7 @@ const MangaGrid = ({ title, showAll = false }: MangaGridProps) => {
       id: 6,
       title: "Chainsaw Man",
       description: "Denji becomes the Chainsaw Devil and hunts other devils for the Public Safety Devil Hunters.",
-      thumbnails: "/manga-cover-6.jpg",
+      thumbnails: "/src/assets/manga-cover-6.jpg",
       linkManga: null,
       color: null,
       site: "Weekly Shonen Jump",
@@ -151,7 +153,10 @@ const MangaGrid = ({ title, showAll = false }: MangaGridProps) => {
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold text-foreground">{title}</h2>
         {!showAll && mangas.length > 6 && (
-          <button className="text-primary hover:text-primary/80 font-medium">
+          <button 
+            className="text-primary hover:text-primary/80 font-medium"
+            onClick={() => navigate("/all-manga")}
+          >
             View All →
           </button>
         )}
