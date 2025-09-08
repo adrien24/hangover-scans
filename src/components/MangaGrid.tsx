@@ -1,5 +1,3 @@
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import MangaCard from "./MangaCard";
 
 interface Manga {
@@ -19,39 +17,104 @@ interface MangaGridProps {
 }
 
 const MangaGrid = ({ title, showAll = false }: MangaGridProps) => {
-  const { data: mangas = [], isLoading, error } = useQuery({
-    queryKey: ['mangas'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('Mangas')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      return data as Manga[];
+  // Mock manga data
+  const mangas: Manga[] = [
+    {
+      id: 1,
+      title: "Attack on Titan",
+      description: "Humanity fights for survival against giant humanoid Titans that have brought civilization to the brink of extinction.",
+      thumbnails: "/manga-cover-1.jpg",
+      linkManga: null,
+      color: null,
+      site: "Manga Plus",
+      created_at: "2024-01-15"
+    },
+    {
+      id: 2,
+      title: "One Piece",
+      description: "Follow Monkey D. Luffy on his quest to become the Pirate King and find the legendary treasure One Piece.",
+      thumbnails: "/manga-cover-2.jpg",
+      linkManga: null,
+      color: null,
+      site: "Weekly Shonen Jump",
+      created_at: "2024-01-14"
+    },
+    {
+      id: 3,
+      title: "Demon Slayer",
+      description: "Tanjiro Kamado becomes a demon slayer to save his sister and avenge his family.",
+      thumbnails: "/manga-cover-3.jpg",
+      linkManga: null,
+      color: null,
+      site: "Weekly Shonen Jump",
+      created_at: "2024-01-13"
+    },
+    {
+      id: 4,
+      title: "My Hero Academia",
+      description: "In a world where people have superpowers, Izuku Midoriya dreams of becoming the greatest hero.",
+      thumbnails: "/manga-cover-4.jpg",
+      linkManga: null,
+      color: null,
+      site: "Weekly Shonen Jump",
+      created_at: "2024-01-12"
+    },
+    {
+      id: 5,
+      title: "Jujutsu Kaisen",
+      description: "Yuji Itadori joins a secret organization of Jujutsu Sorcerers to kill a powerful curse.",
+      thumbnails: "/manga-cover-5.jpg",
+      linkManga: null,
+      color: null,
+      site: "Weekly Shonen Jump",
+      created_at: "2024-01-11"
+    },
+    {
+      id: 6,
+      title: "Chainsaw Man",
+      description: "Denji becomes the Chainsaw Devil and hunts other devils for the Public Safety Devil Hunters.",
+      thumbnails: "/manga-cover-6.jpg",
+      linkManga: null,
+      color: null,
+      site: "Weekly Shonen Jump",
+      created_at: "2024-01-10"
+    },
+    {
+      id: 7,
+      title: "Tokyo Ghoul",
+      description: "Ken Kaneki becomes a half-ghoul and must navigate the world of ghouls and humans.",
+      thumbnails: "/placeholder.svg",
+      linkManga: null,
+      color: null,
+      site: "Weekly Young Jump",
+      created_at: "2024-01-09"
+    },
+    {
+      id: 8,
+      title: "Naruto",
+      description: "Naruto Uzumaki dreams of becoming the Hokage and gaining recognition from his village.",
+      thumbnails: "/placeholder.svg",
+      linkManga: null,
+      color: null,
+      site: "Weekly Shonen Jump",
+      created_at: "2024-01-08"
     }
-  });
+  ];
 
-  const { data: scansCount } = useQuery({
-    queryKey: ['scans-count'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('Scans')
-        .select('id, scan_id')
-        .order('scan_id');
-      
-      if (error) throw error;
-      
-      // Count chapters per manga (assuming scan_id relates to manga id)
-      const counts: Record<string, number> = {};
-      data?.forEach(scan => {
-        if (scan.scan_id) {
-          counts[scan.scan_id] = (counts[scan.scan_id] || 0) + 1;
-        }
-      });
-      return counts;
-    }
-  });
+  // Mock chapter counts for each manga
+  const scansCount: Record<string, number> = {
+    "1": 139,
+    "2": 1100,
+    "3": 230,
+    "4": 400,
+    "5": 250,
+    "6": 180,
+    "7": 179,
+    "8": 700
+  };
+
+  const isLoading = false;
+  const error = null;
 
   const displayManga = showAll ? mangas : mangas.slice(0, 6);
 
