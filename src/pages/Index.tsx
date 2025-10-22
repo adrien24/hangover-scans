@@ -9,13 +9,13 @@ const Index = () => {
       <MangaNavigation />
 
       <main>
-        <HeroSection />
+        {/* <HeroSection /> */}
 
         <div className="container mx-auto px-4 py-12">
           <MangaGrid title="Tendance" />
-          <CategoriesSection />
+          {/* <CategoriesSection />
           <MangaGrid title="Recently Updated" />
-          <MangaGrid title="Top Rated" />
+          <MangaGrid title="Top Rated" /> */}
         </div>
       </main>
 
@@ -24,7 +24,7 @@ const Index = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
               <h3 className="text-lg font-bold mb-4 bg-gradient-orange bg-clip-text text-transparent">
-                MangaRoll
+                Hangover Scans
               </h3>
               <p className="text-muted-foreground">
                 Your ultimate destination for reading manga online. Discover thousands of titles
@@ -32,7 +32,7 @@ const Index = () => {
               </p>
             </div>
 
-            <div>
+            {/* <div>
               <h4 className="font-semibold mb-4 text-foreground">Popular</h4>
               <ul className="space-y-2 text-muted-foreground">
                 <li>
@@ -108,11 +108,11 @@ const Index = () => {
                   </a>
                 </li>
               </ul>
-            </div>
+            </div> */}
           </div>
 
           <div className="border-t border-border mt-8 pt-8 text-center text-muted-foreground">
-            <p>&copy; 2024 MangaRoll. All rights reserved.</p>
+            <p>&copy; 2024 Hangover Scans. All rights reserved.</p>
           </div>
         </div>
       </footer>

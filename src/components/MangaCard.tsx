@@ -49,13 +49,13 @@ const MangaCard = ({
                   Lire
                 </Button>
               </Link>
-              <Button
+              {/* <Button
                 size="sm"
                 variant="secondary"
                 className="bg-white/20 hover:bg-white/30 text-white border-white/20"
               >
                 <Bookmark className="w-4 h-4" />
-              </Button>
+              </Button> */}
             </div>
           </div>
         </div>
@@ -79,13 +79,13 @@ const MangaCard = ({
         </h3>
 
         <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
-          <span className="bg-primary/10 text-primary px-2 py-1 rounded-md text-xs">{genre}</span>
-          <span>{chapters} chapters</span>
+          {/* <span className="bg-primary/10 text-primary px-2 py-1 rounded-md text-xs">{genre}</span> */}
+          {/* <span>{chapters} chapters</span> */}
         </div>
 
         <div className="flex items-center space-x-1">
-          <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-          <span className="text-sm font-medium text-foreground">{rating}</span>
+          {/* <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" /> */}
+          {/* <span className="text-sm font-medium text-foreground">{rating}</span> */}
         </div>
       </div>
     </Card>

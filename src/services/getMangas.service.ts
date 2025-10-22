@@ -1,4 +1,4 @@
-export const getMangaSupabase = async (id?: string) => {
+export const getMangaSupabase = async () => {
   const response = await fetch('https://ajtyenefvkagyajggfrv.supabase.co/functions/v1/get-mangas', {
     method: 'GET',
     headers: {

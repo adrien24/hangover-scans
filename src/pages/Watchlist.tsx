@@ -120,7 +120,6 @@ const Watchlist = () => {
   }
 
   const handleContinueReading = (id: string) => {
-    console.log('Continue reading:', id)
     // Navigate to reading page
   }
 

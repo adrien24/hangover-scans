@@ -25,7 +25,7 @@ interface Scan {
 }
 
 const MangaChapters = () => {
-  const { mangaId } = useParams()
+  const { title } = useParams()
   const [searchTerm, setSearchTerm] = useState('')
   const [manga, setManga] = useState<Manga | null>(null)
   const [chapters, setChapters] = useState<Scan[]>([])
@@ -38,20 +38,20 @@ const MangaChapters = () => {
     let mounted = true
 
     const fetchData = async () => {
-      if (!mangaId) return
+      if (!title) return
       setIsLoading(true)
       setError(null)
       try {
         // fetch manga metadata
-        const mangas = await getAllChapters(mangaId)
-        console.log('mangas fetched:', mangas)
+        const mangas = await getAllChapters(title)
 
         // getMangaSupabase returns an array or object depending on backend; try to handle common shapes
         const foundManga = Array.isArray(mangas) ? mangas[0] : mangas
         if (mounted) setManga(foundManga ?? null)
 
         // fetch chapters
-        const fetchedChapters = await getAllChapters(mangaId)
+        const fetchedChapters = await getAllChapters(title)
+
         if (mounted) setChapters(fetchedChapters || [])
       } catch (err: unknown) {
         console.error('Failed to load manga chapters', err)
@@ -66,7 +66,7 @@ const MangaChapters = () => {
     return () => {
       mounted = false
     }
-  }, [mangaId])
+  }, [title])
 
   if (isLoading) {
     return (
@@ -92,11 +92,13 @@ const MangaChapters = () => {
     )
   }
 
-  const filteredChapters = chapters.filter(
-    (chapter) =>
-      chapter.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      `Chapter ${chapter.chapter}`.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const filteredChapters = chapters
+    .filter(
+      (chapter) =>
+        chapter.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        `Chapter ${chapter.chapter}`.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .sort((a, b) => b.chapter - a.chapter)
 
   return (
     <div className="min-h-screen bg-background">
@@ -117,7 +119,7 @@ const MangaChapters = () => {
                 className="w-12 h-16 object-cover rounded"
               /> */}
               <div>
-                <h1 className="text-xl font-bold text-foreground">{mangaId}</h1>
+                <h1 className="text-xl font-bold text-foreground">{title}</h1>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <BookOpen className="w-4 h-4" />
                   {chapters.length} chapitres
@@ -145,58 +147,56 @@ const MangaChapters = () => {
 
         {/* Chapters List */}
         <div className="space-y-2">
-          {filteredChapters
-            .map((chapter) => {
-              const pageCount = chapter.images
-                ? Array.isArray(chapter.images)
-                  ? chapter.images.length
-                  : Object.keys(chapter.images).length
-                : 0
+          {filteredChapters.map((chapter) => {
+            const pageCount = chapter.images
+              ? Array.isArray(chapter.images)
+                ? chapter.images.length
+                : Object.keys(chapter.images).length
+              : 0
 
-              return (
-                <Card key={chapter.id} className="hover:bg-muted/50 transition-colors">
-                  <div className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4 flex-1">
-                        <div className="text-sm text-muted-foreground font-mono min-w-[3rem]">
-                          #{chapter.chapter}
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="font-medium text-foreground mb-1">
-                            {chapter.title || `Chapter ${chapter.chapter}`}
-                          </h3>
-                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                            <span className="flex items-center gap-1">
-                              <BookOpen className="w-3 h-3" />
-                              {pageCount} pages
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <Clock className="w-3 h-3" />
-                              {chapter.date}
-                            </span>
-                          </div>
-                          {chapter.description && (
-                            <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                              {chapter.description}
-                            </p>
-                          )}
-                        </div>
+            return (
+              <Card key={chapter.id} className="hover:bg-muted/50 transition-colors">
+                <div className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4 flex-1">
+                      <div className="text-sm text-muted-foreground font-mono min-w-[3rem]">
+                        #{chapter.chapter}
                       </div>
-
-                      <div className="flex items-center gap-2">
-                        <Link to={`/manga/${mangaId}/chapter/${chapter.id}`}>
-                          <Button size="sm">Read</Button>
-                        </Link>
-                        <Button size="sm" variant="ghost">
-                          <Download className="w-4 h-4" />
-                        </Button>
+                      <div className="flex-1">
+                        <h3 className="font-medium text-foreground mb-1">
+                          {chapter.title || `Chapter ${chapter.chapter}`}
+                        </h3>
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <BookOpen className="w-3 h-3" />
+                            {pageCount} pages
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            {chapter.date}
+                          </span>
+                        </div>
+                        {chapter.description && (
+                          <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                            {chapter.description}
+                          </p>
+                        )}
                       </div>
                     </div>
+
+                    <div className="flex items-center gap-2">
+                      <Link to={`/manga/${title}/chapter/${chapter.chapter}`}>
+                        <Button size="sm">Lire</Button>
+                      </Link>
+                      <Button size="sm" variant="ghost">
+                        <Download className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
-                </Card>
-              )
-            })
-            .reverse()}
+                </div>
+              </Card>
+            )
+          })}
         </div>
 
         {filteredChapters.length === 0 && (

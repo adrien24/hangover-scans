@@ -17,9 +17,9 @@ const MangaNavigation = () => {
               className="text-2xl font-bold bg-gradient-orange bg-clip-text text-transparent cursor-pointer"
               onClick={() => navigate('/')}
             >
-              MangaRoll
+              Hangover Scans
             </h1>
-            <div className="hidden md:flex space-x-6">
+            {/* <div className="hidden md:flex space-x-6">
               <Button
                 variant="ghost"
                 className="text-foreground hover:text-primary"
@@ -48,11 +48,11 @@ const MangaNavigation = () => {
               >
                 Top Rated
               </Button>
-            </div>
+            </div> */}
           </div>
 
           <div className="flex items-center space-x-4">
-            <div className="relative hidden sm:block">
+            {/* <div className="relative hidden sm:block">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Chercher un manga..."
@@ -65,9 +65,9 @@ const MangaNavigation = () => {
                   }
                 }}
               />
-            </div>
+            </div> */}
 
-            <Button
+            {/* <Button
               variant="ghost"
               size="icon"
               className="hover:bg-manga-card"
@@ -85,7 +85,7 @@ const MangaNavigation = () => {
               onClick={() => navigate('/account')}
             >
               <User className="h-5 w-5" />
-            </Button>
+            </Button> */}
           </div>
         </div>
       </div>
