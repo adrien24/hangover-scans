@@ -1,28 +1,34 @@
-import { useState } from "react";
-import { Filter, Grid, List, Search } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import MangaNavigation from "@/components/MangaNavigation";
-import MangaGrid from "@/components/MangaGrid";
+import { useState } from 'react'
+import { Filter, Grid, List, Search } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import MangaNavigation from '@/components/MangaNavigation'
+import MangaGrid from '@/components/MangaGrid'
 
 const AllManga = () => {
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [sortBy, setSortBy] = useState('title');
-  const [genreFilter, setGenreFilter] = useState('all');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [sortBy, setSortBy] = useState('title')
+  const [genreFilter, setGenreFilter] = useState('all')
+  const [statusFilter, setStatusFilter] = useState('all')
 
   return (
     <div className="min-h-screen bg-background">
       <MangaNavigation />
-      
+
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-foreground mb-2">All Manga</h1>
-            <p className="text-muted-foreground">Browse through our complete manga collection</p>
+            <h1 className="text-3xl font-bold text-foreground mb-2">Tous les mangas</h1>
+            <p className="text-muted-foreground">Voici la collection complète de nos mangas</p>
           </div>
         </div>
 
@@ -31,8 +37,8 @@ const AllManga = () => {
           {/* Search Bar */}
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input 
-              placeholder="Search manga by title, author, or description..." 
+            <Input
+              placeholder="Chercher un manga"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
@@ -58,7 +64,7 @@ const AllManga = () => {
                 <SelectItem value="popular">Most Popular</SelectItem>
               </SelectContent>
             </Select>
-            
+
             <Select value={genreFilter} onValueChange={setGenreFilter}>
               <SelectTrigger className="w-32">
                 <SelectValue placeholder="Genre" />
@@ -81,12 +87,12 @@ const AllManga = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="ongoing">Ongoing</SelectItem>
+                <SelectItem value="En cours">En cours</SelectItem>
                 <SelectItem value="completed">Completed</SelectItem>
                 <SelectItem value="hiatus">On Hiatus</SelectItem>
               </SelectContent>
             </Select>
-            
+
             <div className="flex items-center border rounded-lg">
               <Button
                 variant={viewMode === 'grid' ? 'default' : 'ghost'}
@@ -109,11 +115,11 @@ const AllManga = () => {
         {/* Results Info */}
         <div className="flex items-center justify-between mb-6">
           <p className="text-muted-foreground">
-            {searchQuery ? `Search results for "${searchQuery}"` : 'Showing all manga'}
+            {searchQuery
+              ? `Chercher un résultat pour "${searchQuery}"`
+              : 'Afficher tous les mangas'}
           </p>
-          <p className="text-muted-foreground text-sm">
-            8 results found
-          </p>
+          <p className="text-muted-foreground text-sm">8 résultats trouvés</p>
         </div>
 
         {/* Content */}
@@ -122,12 +128,12 @@ const AllManga = () => {
         {/* Load More Button */}
         <div className="text-center mt-12">
           <Button variant="outline" size="lg">
-            Load More Manga
+            Afficher plus de mangas
           </Button>
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default AllManga;
+export default AllManga

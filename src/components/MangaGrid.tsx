@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { getMangaSupabase } from '@/services/getMangas.services'
+import { getMangaSupabase } from '@/services/getMangas.service'
 import MangaCard from './MangaCard'
 import { useNavigate } from 'react-router-dom'
 
@@ -107,7 +107,7 @@ const MangaGrid = ({ title, showAll = false }: MangaGridProps) => {
             className="text-primary hover:text-primary/80 font-medium"
             onClick={() => navigate('/all-manga')}
           >
-            View All →
+            Tout voir →
           </button>
         )}
       </div>
@@ -122,7 +122,7 @@ const MangaGrid = ({ title, showAll = false }: MangaGridProps) => {
             genre={manga.site || 'Unknown'}
             rating={4.5} // Default rating since not in DB
             chapters={scansCount?.[manga.id.toString()] || 0}
-            status="Ongoing" // Default status since not in DB
+            status="En cours" // Default status since not in DB
             description={manga.description || ''}
           />
         ))}
