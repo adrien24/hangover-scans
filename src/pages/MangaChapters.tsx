@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
-import { ArrowLeft, Search, BookOpen, Clock, Download } from 'lucide-react'
+import { ArrowLeft, Search, BookOpen, Clock, Download, CheckCircle } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { getAllChapters } from '@/services/getChapters.service'
+import { useBookmarkStorage } from '@/hooks/useBookmarkStorage'
 
 interface Manga {
   id: number
@@ -31,6 +32,7 @@ const MangaChapters = () => {
   const [chapters, setChapters] = useState<Scan[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const { getChapter, isChapterFinished } = useBookmarkStorage()
   // fetch manga metadata and chapters from services
   // We'll import the existing getMangaSupabase and the new getChaptersSupabase
 
@@ -154,6 +156,23 @@ const MangaChapters = () => {
                 : Object.keys(chapter.images).length
               : 0
 
+            const isFinished = isChapterFinished(title, chapter.chapter)
+            const chapterBookmark = getChapter(title, chapter.chapter)
+
+            const getButtonDisplay = () => {
+              if (!chapterBookmark) {
+                return { text: 'Lire', icon: null, variant: 'default' }
+              }
+
+              if (isFinished) {
+                return { text: 'fini', icon: CheckCircle, variant: 'secondary' }
+              }
+
+              return { text: 'Continuer', icon: null, variant: 'default' }
+            }
+
+            const buttonDisplay = getButtonDisplay()
+
             return (
               <Card key={chapter.id} className="hover:bg-muted/50 transition-colors">
                 <div className="p-4">
@@ -186,7 +205,17 @@ const MangaChapters = () => {
 
                     <div className="flex items-center gap-2">
                       <Link to={`/manga/${title}/chapter/${chapter.chapter}`}>
-                        <Button size="sm">Lire</Button>
+                        <Button
+                          size="sm"
+                          className={`${
+                            buttonDisplay.variant === 'default'
+                              ? 'bg-primary hover:bg-primary/90'
+                              : 'bg-green-600 hover:bg-green-700'
+                          }`}
+                        >
+                          {buttonDisplay.icon && <buttonDisplay.icon className="w-4 h-4 mr-1" />}
+                          {buttonDisplay.text}
+                        </Button>
                       </Link>
                       <Button size="sm" variant="ghost">
                         <Download className="w-4 h-4" />

@@ -1,8 +1,9 @@
-import { Star, Play, Bookmark } from 'lucide-react'
+import { Star, Play, Bookmark, CheckCircle } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { useBookmarkStorage } from '@/hooks/useBookmarkStorage'
 
 interface MangaCardProps {
   id: string
@@ -25,6 +26,26 @@ const MangaCard = ({
   status,
   description,
 }: MangaCardProps) => {
+  const { getManga } = useBookmarkStorage()
+  const mangaBookmark = getManga(title)
+
+  // Récupérer le dernier chapitre lu
+  const lastReadChapter = mangaBookmark?.chapters.sort((a, b) => b.id - a.id).at(0)
+
+  // Déterminer le statut d'affichage
+  const getButtonDisplay = () => {
+    if (!lastReadChapter) {
+      return { text: 'Lire', icon: Play, variant: 'default' }
+    }
+
+    if (lastReadChapter.isFinished) {
+      return { text: 'Chapitre fini', icon: CheckCircle, variant: 'secondary' }
+    }
+
+    return { text: 'Continuer', icon: Play, variant: 'default' }
+  }
+
+  const buttonDisplay = getButtonDisplay()
   return (
     <Card className="group relative overflow-hidden bg-manga-card border-border hover:bg-manga-card-hover transition-all duration-300 hover:scale-105 hover:shadow-xl">
       {/* Cover Image */}
@@ -43,10 +64,14 @@ const MangaCard = ({
               <Link to={`/manga/${title}`}>
                 <Button
                   size="sm"
-                  className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                  className={`text-primary-foreground ${
+                    buttonDisplay.variant === 'default'
+                      ? 'bg-primary hover:bg-primary/90'
+                      : 'bg-green-600 hover:bg-green-700'
+                  }`}
                 >
-                  <Play className="w-4 h-4 mr-1" />
-                  Lire
+                  <buttonDisplay.icon className="w-4 h-4 mr-1" />
+                  {buttonDisplay.text}
                 </Button>
               </Link>
               {/* <Button

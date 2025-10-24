@@ -1,5 +1,6 @@
 import useScansController from '@/hooks/useScansController'
 import { useReaderModeStorage } from '@/hooks/useReaderModeStorage'
+import { useBookmarkStorage } from '@/hooks/useBookmarkStorage'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import ReaderHeader from '@/components/ReaderHeader'
@@ -11,7 +12,9 @@ const ChapterReader = () => {
   const navigate = useNavigate()
   const [showHeader, setShowHeader] = useState(false)
   const { getMangaMode, saveMangaMode, initialMode } = useReaderModeStorage(title)
+  const { getCurrentPage, markChapterAsFinished } = useBookmarkStorage()
   const [isCarouselMode, setIsCarouselMode] = useState(initialMode === 'carousel')
+  const currentPage = getCurrentPage(title, id)
 
   const controller = useScansController(id, title)
 
@@ -45,6 +48,10 @@ const ChapterReader = () => {
 
   const handleNextChapter = () => {
     const nextChapterId = parseInt(String(id)) + 1
+    // Marquer le chapitre actuel comme finished
+    if (title && id) {
+      markChapterAsFinished(title, parseInt(String(id)))
+    }
     navigate(`/manga/${title}/chapter/${nextChapterId}`)
   }
 
@@ -64,6 +71,9 @@ const ChapterReader = () => {
           images={controller.imagesScans}
           onImageLoad={handleImageLoad}
           onClick={handlePageClick}
+          mangaTitle={title}
+          chapterId={id}
+          currentPage={currentPage}
         />
       ) : (
         <VerticalReader
