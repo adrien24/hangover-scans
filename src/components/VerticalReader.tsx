@@ -32,7 +32,11 @@ const VerticalReader = memo(({ images, onImageLoad, onClick }: VerticalReaderPro
         {images.map((imageScan, index) => (
           <div key={index} className="w-full flex justify-center mb-4">
             <img
-              src={`${imageScan.url}`}
+              src={`${
+                imageScan.url.includes('lelmanga')
+                  ? `https://hangoverscans.fr/compressImage.php?imgurl=${imageScan.url}`
+                  : imageScan.url
+              }`}
               alt={`Page ${index + 1}`}
               className="max-w-full h-auto"
               onLoad={() => {

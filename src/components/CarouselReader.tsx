@@ -30,13 +30,6 @@ const CarouselReader = memo(
   }: CarouselReaderProps) => {
     const [loadedCount, setLoadedCount] = useState(0)
     const [api, setApi] = useState<CarouselApi>()
-    const [zoom, setZoom] = useState(1)
-    const [isZoomed, setIsZoomed] = useState(false)
-    const [panX, setPanX] = useState(0)
-    const [panY, setPanY] = useState(0)
-    const [isPanning, setIsPanning] = useState(false)
-    const [panStartX, setPanStartX] = useState(0)
-    const [panStartY, setPanStartY] = useState(0)
     const { saveBookmark } = useBookmarkStorage()
 
     useEffect(() => {
@@ -72,65 +65,11 @@ const CarouselReader = memo(
       api.scrollTo(currentPage)
     }, [api, allImagesLoaded, currentPage])
 
-    const handleWheel = (e: React.WheelEvent) => {
-      if (e.ctrlKey || e.metaKey) {
-        e.preventDefault()
-        const delta = e.deltaY > 0 ? 0.9 : 1.1
-        const newZoom = Math.max(1, Math.min(zoom * delta, 5))
-        setZoom(newZoom)
-        setIsZoomed(newZoom > 1)
-      }
-    }
-
-    const handleMouseDown = (e: React.MouseEvent) => {
-      if (!isZoomed) return
-      setIsPanning(true)
-      setPanStartX(e.clientX - panX)
-      setPanStartY(e.clientY - panY)
-    }
-
-    const handleMouseMove = (e: React.MouseEvent) => {
-      if (!isPanning || !isZoomed) return
-      setPanX(e.clientX - panStartX)
-      setPanY(e.clientY - panStartY)
-    }
-
-    const handleMouseUp = () => {
-      setIsPanning(false)
-    }
-
-    const handleDoubleClick = () => {
-      if (isZoomed) {
-        setZoom(1)
-        setIsZoomed(false)
-        setPanX(0)
-        setPanY(0)
-      } else {
-        setZoom(2)
-        setIsZoomed(true)
-      }
-    }
-
     return (
       <>
         {!allImagesLoaded && <ImageLoader />}
-        <div
-          className="w-full h-screen flex items-center justify-center"
-          onClick={onClick}
-          onWheel={handleWheel}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
-          style={{ cursor: isZoomed ? (isPanning ? 'grabbing' : 'grab') : 'default' }}
-        >
-          <Carousel
-            className="w-full max-w-4xl"
-            setApi={setApi}
-            opts={{
-              skipSnaps: isZoomed,
-            }}
-          >
+        <div className="w-full h-screen flex items-center justify-center" onClick={onClick}>
+          <Carousel className="w-full max-w-4xl" setApi={setApi}>
             <CarouselContent>
               {images.map((imageScan, index) => (
                 <CarouselItem key={index} className="flex items-center justify-center">
@@ -142,16 +81,10 @@ const CarouselReader = memo(
                           : imageScan.url
                       }`}
                       alt={`Page ${index + 1}`}
-                      className="max-h-screen max-w-full object-contain transition-transform duration-200 select-none"
-                      style={{
-                        transform: `scale(${zoom}) translate(${panX}px, ${panY}px)`,
-                        cursor: 'default',
-                      }}
+                      className="max-h-screen max-w-full object-contain"
                       onLoad={() => {
                         handleImageLoad(index)
                       }}
-                      onDoubleClick={handleDoubleClick}
-                      draggable={false}
                     />
                   </div>
                 </CarouselItem>

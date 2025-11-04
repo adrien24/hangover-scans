@@ -18,26 +18,24 @@ export default defineConfig(({ mode }) => ({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'robots.txt'],
       manifest: {
-        name: 'MangaRoll - Read Manga Online',
-        short_name: 'MangaRoll',
-        description: 'Discover and read thousands of manga titles online',
-        theme_color: '#9b87f5',
+        name: 'Hangover Scans',
+        short_name: 'HangoverScans',
+        description: 'Découvrez et lisez vos mangas préférés en ligne sur Hangover Scans.',
+        theme_color: '#1A1F2C',
         background_color: '#1A1F2C',
         display: 'standalone',
         icons: [
           {
-            src: '/placeholder.svg',
+            src: '/icons/icon-192x192.png',
             sizes: '192x192',
-            type: 'image/svg+xml',
-            purpose: 'any maskable'
+            type: 'image/png',
           },
           {
-            src: '/placeholder.svg',
+            src: '/icons/icon-512x512.png',
             sizes: '512x512',
-            type: 'image/svg+xml',
-            purpose: 'any maskable'
-          }
-        ]
+            type: 'image/png',
+          },
+        ],
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,jpg,jpeg}'],
