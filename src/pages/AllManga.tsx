@@ -18,6 +18,7 @@ const AllManga = () => {
   const [sortBy, setSortBy] = useState('title')
   const [genreFilter, setGenreFilter] = useState('all')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [mangaCount, setMangaCount] = useState(0)
 
   return (
     <div className="min-h-screen bg-background">
@@ -46,7 +47,7 @@ const AllManga = () => {
           </div>
 
           {/* Filters */}
-          <div className="flex flex-wrap items-center gap-4">
+          {/* <div className="flex flex-wrap items-center gap-4">
             <div className="flex items-center gap-2">
               <Filter className="w-4 h-4 text-muted-foreground" />
               <span className="text-sm font-medium">Filters:</span>
@@ -109,7 +110,7 @@ const AllManga = () => {
                 <List className="w-4 h-4" />
               </Button>
             </div>
-          </div>
+          </div> */}
         </div>
 
         {/* Results Info */}
@@ -119,11 +120,18 @@ const AllManga = () => {
               ? `Chercher un résultat pour "${searchQuery}"`
               : 'Afficher tous les mangas'}
           </p>
-          <p className="text-muted-foreground text-sm">8 résultats trouvés</p>
+          <p className="text-muted-foreground text-sm">
+            {mangaCount} résultat{mangaCount !== 1 ? 's' : ''} trouvé{mangaCount !== 1 ? 's' : ''}
+          </p>
         </div>
 
         {/* Content */}
-        <MangaGrid title="" showAll={true} />
+        <MangaGrid
+          title=""
+          showAll={true}
+          searchedTitle={searchQuery}
+          onMangasLoaded={setMangaCount}
+        />
 
         {/* Load More Button */}
         <div className="text-center mt-12">

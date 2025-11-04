@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo, useCallback } from 'react'
 import { getMangaSupabase } from '@/services/getMangas.service'
 import MangaCard from './MangaCard'
 import { useNavigate } from 'react-router-dom'
@@ -17,45 +17,39 @@ interface Manga {
 interface MangaGridProps {
   title: string
   showAll?: boolean
+  searchedTitle?: string
+  onMangasLoaded?: (count: number) => void
 }
 
-const MangaGrid = ({ title, showAll = false }: MangaGridProps) => {
+const SKELETON_COUNT = 6
+const DEFAULT_DISPLAY_LIMIT = 6
+
+const MangaGrid = ({ title, showAll = false, searchedTitle, onMangasLoaded }: MangaGridProps) => {
   const navigate = useNavigate()
 
-  // state: list of mangas retrieved from Supabase
-  const [getAllMangas, setGetAllMangas] = useState<Manga[]>([])
-  const [isLoading, setIsLoading] = useState<boolean>(true)
+  const [allMangas, setAllMangas] = useState<Manga[]>([])
+  const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // Mock chapter counts for each manga
-  const scansCount: Record<string, number> = {
-    '1': 139,
-    '2': 1100,
-    '3': 230,
-    '4': 400,
-    '5': 250,
-    '6': 180,
-    '7': 179,
-    '8': 700,
-  }
-
   useEffect(() => {
-    let mounted = true
+    let isMounted = true
 
     const fetchMangas = async () => {
-      setIsLoading(true)
-      setError(null)
       try {
+        setIsLoading(true)
+        setError(null)
+
         const data = await getMangaSupabase()
-        if (mounted) {
-          setGetAllMangas(Array.isArray(data) ? data : [])
+
+        if (isMounted) {
+          setAllMangas(data)
         }
-      } catch (e) {
-        if (mounted) {
-          setError((e as Error)?.message ?? 'Failed to load mangas')
+      } catch (err) {
+        if (isMounted) {
+          setError(err instanceof Error ? err.message : 'Failed to load mangas')
         }
       } finally {
-        if (mounted) {
+        if (isMounted) {
           setIsLoading(false)
         }
       }
@@ -64,11 +58,31 @@ const MangaGrid = ({ title, showAll = false }: MangaGridProps) => {
     fetchMangas()
 
     return () => {
-      mounted = false
+      isMounted = false
     }
   }, [])
 
-  const displayManga = showAll ? getAllMangas : getAllMangas.slice(0, 6)
+  const filteredMangas = useMemo(() => {
+    if (!searchedTitle) return allMangas
+
+    const searchLower = searchedTitle.toLowerCase()
+    return allMangas.filter((manga) => manga.title.toLowerCase().includes(searchLower))
+  }, [allMangas, searchedTitle])
+
+  const displayedMangas = useMemo(() => {
+    return showAll ? filteredMangas : filteredMangas.slice(0, DEFAULT_DISPLAY_LIMIT)
+  }, [filteredMangas, showAll])
+
+  // Callback pour notifier le parent du nombre de mangas filtrés
+  useEffect(() => {
+    if (onMangasLoaded && !isLoading) {
+      onMangasLoaded(filteredMangas.length)
+    }
+  }, [filteredMangas.length, isLoading, onMangasLoaded])
+
+  const handleViewAll = useCallback(() => {
+    navigate('/all-manga')
+  }, [navigate])
 
   if (isLoading) {
     return (
@@ -77,7 +91,7 @@ const MangaGrid = ({ title, showAll = false }: MangaGridProps) => {
           <h2 className="text-2xl font-bold text-foreground">{title}</h2>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
-          {Array.from({ length: 6 }).map((_, i) => (
+          {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
             <div key={i} className="bg-muted animate-pulse rounded-lg aspect-[3/4]" />
           ))}
         </div>
@@ -98,14 +112,16 @@ const MangaGrid = ({ title, showAll = false }: MangaGridProps) => {
     )
   }
 
+  const showViewAllButton = !showAll && filteredMangas.length > DEFAULT_DISPLAY_LIMIT
+
   return (
     <section className="mb-12">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold text-foreground">{title}</h2>
-        {!showAll && getAllMangas.length > 6 && (
+        {showViewAllButton && (
           <button
             className="text-primary hover:text-primary/80 font-medium"
-            onClick={() => navigate('/all-manga')}
+            onClick={handleViewAll}
           >
             Tout voir →
           </button>
@@ -113,22 +129,22 @@ const MangaGrid = ({ title, showAll = false }: MangaGridProps) => {
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
-        {displayManga.map((manga) => (
+        {displayedMangas.map((manga) => (
           <MangaCard
             key={manga.id}
             id={manga.id.toString()}
             title={manga.title}
             cover={manga.thumbnails || '/placeholder.svg'}
             genre={manga.site || 'Unknown'}
-            rating={4.5} // Default rating since not in DB
-            chapters={scansCount?.[manga.id.toString()] || 0}
-            status="En cours" // Default status since not in DB
+            rating={4.5}
+            chapters={[]}
+            status="En cours"
             description={manga.description || ''}
           />
         ))}
       </div>
 
-      {displayManga.length === 0 && (
+      {displayedMangas.length === 0 && (
         <div className="text-center py-8">
           <p className="text-muted-foreground">No manga available yet.</p>
         </div>

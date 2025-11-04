@@ -137,8 +137,7 @@ const CarouselReader = memo(
                   <div className="w-full h-screen flex items-center justify-center overflow-hidden">
                     <img
                       src={`${
-                        imageScan.url.includes('lelmanga') ||
-                        imageScan.url.includes('anime-sama.fr')
+                        imageScan.url.includes('lelmanga')
                           ? `https://hangoverscans.fr/compressImage.php?imgurl=${imageScan.url}`
                           : imageScan.url
                       }`}

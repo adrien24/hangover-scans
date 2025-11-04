@@ -176,22 +176,22 @@ const MangaChapters = () => {
             return (
               <Card key={chapter.id} className="hover:bg-muted/50 transition-colors">
                 <div className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4 flex-1">
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-4 flex-1 min-w-0">
                       <div className="text-sm text-muted-foreground font-mono min-w-[3rem]">
                         #{chapter.chapter}
                       </div>
-                      <div className="flex-1">
-                        <h3 className="font-medium text-foreground mb-1">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-medium text-foreground mb-1 truncate">
                           {chapter.title || `Chapter ${chapter.chapter}`}
                         </h3>
                         <div className="flex items-center gap-4 text-sm text-muted-foreground">
                           <span className="flex items-center gap-1">
-                            <BookOpen className="w-3 h-3" />
-                            {pageCount} pages
+                            {/* <BookOpen className="w-3 h-3" /> */}
+                            {/* {pageCount} pages */}
                           </span>
                           <span className="flex items-center gap-1">
-                            <Clock className="w-3 h-3" />
+                            {/* <Clock className="w-3 h-3" /> */}
                             {chapter.date}
                           </span>
                         </div>
@@ -217,9 +217,9 @@ const MangaChapters = () => {
                           {buttonDisplay.text}
                         </Button>
                       </Link>
-                      <Button size="sm" variant="ghost">
+                      {/* <Button size="sm" variant="ghost">
                         <Download className="w-4 h-4" />
-                      </Button>
+                      </Button> */}
                     </div>
                   </div>
                 </div>

@@ -11,21 +11,12 @@ interface MangaCardProps {
   cover: string
   genre: string
   rating: number
-  chapters: number
   status: 'En cours' | 'Completed'
   description: string
+  chapters: Array<[]>
 }
 
-const MangaCard = ({
-  id,
-  title,
-  cover,
-  genre,
-  rating,
-  chapters,
-  status,
-  description,
-}: MangaCardProps) => {
+const MangaCard = ({ title, cover, status, description }: MangaCardProps) => {
   const { getManga } = useBookmarkStorage()
   const mangaBookmark = getManga(title)
 
