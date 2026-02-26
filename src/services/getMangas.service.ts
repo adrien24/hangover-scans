@@ -1,12 +1,17 @@
-export const getMangaSupabase = async () => {
-  const response = await fetch('https://ajtyenefvkagyajggfrv.supabase.co/functions/v1/get-mangas', {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: 'Bearer ' + import.meta.env.VITE_SUPABASE_KEY,
-    },
-  })
+const url = import.meta.env.VITE_BACKEND_URL;
 
-  const result = await response.json()
-  return result.data
-}
+export const getManga = async () => {
+  console.log("start");
+
+  const response = await fetch(url + "/api/mangas", {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  const result = await response.json();
+  console.log(result);
+
+  return result.data;
+};
