@@ -1,4 +1,4 @@
-import { Star, Play, Bookmark, CheckCircle } from "lucide-react";
+import { Play, CheckCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";

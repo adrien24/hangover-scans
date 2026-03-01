@@ -40,8 +40,11 @@ const MangaChapters = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isDescending, setIsDescending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [chapterToContinue, setChapterToContinue] = useState<number | null>(
+    null,
+  );
   const [sortAsc, setSortAsc] = useState(false);
-  const { getChapter, isChapterFinished } = useBookmarkStorage();
+  const { getChapter, getManga, isChapterFinished } = useBookmarkStorage();
 
   useEffect(() => {
     let mounted = true;
@@ -56,6 +59,22 @@ const MangaChapters = () => {
         if (mounted) {
           setManga(mangas ?? null);
           setAllChapters(mangas?.chapters ?? []);
+
+          const bookmarkedManga = getManga(title);
+          if (bookmarkedManga && bookmarkedManga.chapters.length > 0) {
+            const lastRead = bookmarkedManga.chapters.reduce((prev, curr) =>
+              curr.lastUpdated > prev.lastUpdated ? curr : prev,
+            );
+            if (lastRead.isFinished) {
+              const apiChapters = mangas?.chapters ?? [];
+              const nextChapter = apiChapters
+                .filter((c) => c.id > lastRead.id)
+                .sort((a, b) => a.id - b.id)[0];
+              setChapterToContinue(nextChapter ? nextChapter.id : lastRead.id);
+            } else {
+              setChapterToContinue(lastRead.id);
+            }
+          }
         }
       } catch (err: unknown) {
         if (mounted) setError(err instanceof Error ? err.message : String(err));
@@ -130,6 +149,23 @@ const MangaChapters = () => {
         </div>
       </div>
 
+      <div className='container mx-auto px-4 pt-6'>
+        <Button
+          variant='default'
+          size='sm'
+          onClick={() => {
+            if (chapterToContinue !== null) {
+              window.location.href = `/manga/${title}/chapter/${chapterToContinue}`;
+            } else if (allChapters.length > 0) {
+              window.location.href = `/manga/${title}/chapter/${allChapters[0].id}`;
+            }
+          }}
+        >
+          {chapterToContinue !== null
+            ? `Continuer la lecture : chp. ${chapterToContinue}`
+            : "Commencer la lecture"}
+        </Button>
+      </div>
       <div className='container mx-auto px-4 py-6'>
         {/* Search Bar */}
         <div className='flex gap-4'>
