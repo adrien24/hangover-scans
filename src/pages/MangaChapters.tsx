@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
   Search,
@@ -6,6 +6,8 @@ import {
   Clock,
   Download,
   CheckCircle,
+  AArrowDown,
+  AArrowUp,
 } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { Card } from "@/components/ui/card";
@@ -16,39 +18,30 @@ import { getAllChapters } from "@/services/getChapters.service";
 import { useBookmarkStorage } from "@/hooks/useBookmarkStorage";
 import { enumStatus } from "@/components/MangaGrid";
 
-interface Manga {
-  id: number;
-  title: string;
-  description: string | null;
-  thumbnails: string | null;
-}
-
 interface Chapter {
   name: string;
   id: number;
   images: Array<string>;
 }
 
-interface Scan {
+export interface MangaChapter {
   count: number;
   manga: string | null;
   status: string | null;
-  images: Array<string>;
-  date: string;
   chapters: Array<Chapter>;
-  scan_id: string | null;
+  thumbnails: string;
 }
 
 const MangaChapters = () => {
   const { title } = useParams();
   const [searchTerm, setSearchTerm] = useState("");
-  const [manga, setManga] = useState<Manga | null>(null);
-  const [chapters, setChapters] = useState<Scan>();
+  const [manga, setManga] = useState<MangaChapter>(null);
+  const [allChapters, setAllChapters] = useState<Chapter[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isDescending, setIsDescending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [sortAsc, setSortAsc] = useState(false);
   const { getChapter, isChapterFinished } = useBookmarkStorage();
-  // fetch manga metadata and chapters from services
-  // We'll import the existing getManga and the new getChaptersSupabase
 
   useEffect(() => {
     let mounted = true;
@@ -58,19 +51,13 @@ const MangaChapters = () => {
       setIsLoading(true);
       setError(null);
       try {
-        // fetch manga metadata
         const mangas = await getAllChapters(title);
 
-        // getManga returns an array or object depending on backend; try to handle common shapes
-        const foundManga = Array.isArray(mangas) ? mangas[0] : mangas;
-        if (mounted) setManga(foundManga ?? null);
-
-        // fetch chapters
-        const fetchedChapters: Scan = await getAllChapters(title);
-
-        if (mounted) setChapters(fetchedChapters);
+        if (mounted) {
+          setManga(mangas ?? null);
+          setAllChapters(mangas?.chapters ?? []);
+        }
       } catch (err: unknown) {
-        console.error("Failed to load manga chapters", err);
         if (mounted) setError(err instanceof Error ? err.message : String(err));
       } finally {
         if (mounted) setIsLoading(false);
@@ -84,6 +71,20 @@ const MangaChapters = () => {
     };
   }, [title]);
 
+  const filteredChapters = useMemo(
+    () =>
+      allChapters
+        .filter(
+          (chapter) =>
+            chapter.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            `Chapter ${chapter.name}`
+              .toLowerCase()
+              .includes(searchTerm.toLowerCase()),
+        )
+        .sort((a, b) => (sortAsc ? a.id - b.id : b.id - a.id)),
+    [allChapters, searchTerm, sortAsc],
+  );
+
   if (isLoading) {
     return (
       <div className='min-h-screen bg-background flex items-center justify-center'>
@@ -94,18 +95,9 @@ const MangaChapters = () => {
       </div>
     );
   }
-
   if (!manga) return;
 
-  const filteredChapters = chapters.chapters
-    .filter(
-      (chapter) =>
-        chapter.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        `Chapter ${chapter.name}`
-          .toLowerCase()
-          .includes(searchTerm.toLowerCase()),
-    )
-    .sort((a, b) => b.id - a.id);
+  const sortingFilter = () => setSortAsc((prev) => !prev);
 
   return (
     <div className='min-h-screen bg-background'>
@@ -129,10 +121,8 @@ const MangaChapters = () => {
                 <h1 className='text-xl font-bold text-foreground'>{title}</h1>
                 <div className='flex items-center gap-2 text-sm text-muted-foreground'>
                   <BookOpen className='w-4 h-4' />
-                  {chapters.chapters.length} chapitres
-                  <Badge variant='secondary'>
-                    {enumStatus(chapters.status)}
-                  </Badge>
+                  {manga.chapters?.length} chapitres
+                  <Badge variant='secondary'>{enumStatus(manga.status)}</Badge>
                 </div>
               </div>
             </div>
@@ -142,16 +132,28 @@ const MangaChapters = () => {
 
       <div className='container mx-auto px-4 py-6'>
         {/* Search Bar */}
-        <div className='mb-6'>
-          <div className='relative max-w-md'>
-            <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4' />
-            <Input
-              placeholder='Chercher un chapitre...'
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className='pl-10'
-            />
+        <div className='flex gap-4'>
+          <div className='mb-6'>
+            <div className='relative max-w-md'>
+              <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4' />
+              <Input
+                placeholder='Chercher un chapitre...'
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className='pl-10'
+              />
+            </div>
           </div>
+          <Button
+            size='icon'
+            variant='secondary'
+            onClick={() => {
+              sortingFilter();
+              setIsDescending(!isDescending);
+            }}
+          >
+            {isDescending ? <AArrowUp /> : <AArrowDown />}
+          </Button>
         </div>
 
         {/* Chapters List */}
@@ -201,8 +203,8 @@ const MangaChapters = () => {
                         </h3>
                         <div className='flex items-center gap-4 text-sm text-muted-foreground'>
                           <span className='flex items-center gap-1'>
-                            {/* <BookOpen className="w-3 h-3" /> */}
-                            {/* {pageCount} pages */}
+                            <BookOpen className='w-3 h-3' />
+                            {pageCount} pages
                           </span>
                           <span className='flex items-center gap-1'>
                             {/* <Clock className="w-3 h-3" /> */}
