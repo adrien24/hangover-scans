@@ -17,7 +17,7 @@ interface MangaCardProps {
 }
 
 const MangaCard = ({ title, cover, status, description }: MangaCardProps) => {
-  const { getManga } = useBookmarkStorage();
+  const { getMangaLocalStorage: getManga } = useBookmarkStorage();
   const mangaBookmark = getManga(title);
 
   // Récupérer le dernier chapitre lu

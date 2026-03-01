@@ -13,7 +13,7 @@ interface MangaBookmark {
 const BOOKMARKS_STORAGE_KEY = "manga-bookmarks";
 
 export function useBookmarkStorage() {
-  const getMangas = (): MangaBookmark[] => {
+  const getMangasLocalStorage = (): MangaBookmark[] => {
     try {
       const stored = localStorage.getItem(BOOKMARKS_STORAGE_KEY);
       return stored ? JSON.parse(stored) : [];
@@ -22,9 +22,9 @@ export function useBookmarkStorage() {
     }
   };
 
-  const getManga = (mangaTitle?: string): MangaBookmark | null => {
+  const getMangaLocalStorage = (mangaTitle?: string): MangaBookmark | null => {
     if (!mangaTitle) return null;
-    const mangas = getMangas();
+    const mangas = getMangasLocalStorage();
     return mangas.find((m) => m.title === mangaTitle) || null;
   };
 
@@ -33,7 +33,7 @@ export function useBookmarkStorage() {
     chapterId?: string | number,
   ): Chapter | null => {
     if (!mangaTitle || chapterId === undefined) return null;
-    const manga = getManga(mangaTitle);
+    const manga = getMangaLocalStorage(mangaTitle);
     if (!manga) return null;
     const numChapterId =
       typeof chapterId === "string" ? parseInt(chapterId) : chapterId;
@@ -46,7 +46,7 @@ export function useBookmarkStorage() {
     currentPage: number,
     isFinished: boolean = false,
   ) => {
-    const mangas = getMangas();
+    const mangas = getMangasLocalStorage();
     let manga = mangas.find((m) => m.title === mangaTitle);
 
     if (!manga) {
@@ -73,7 +73,7 @@ export function useBookmarkStorage() {
   };
 
   const markChapterAsFinished = (mangaTitle: string, chapterId: number) => {
-    const mangas = getMangas();
+    const mangas = getMangasLocalStorage();
     let manga = mangas.find((m) => m.title === mangaTitle);
 
     if (!manga) {
@@ -115,8 +115,8 @@ export function useBookmarkStorage() {
   };
 
   return {
-    getMangas,
-    getManga,
+    getMangasLocalStorage: getMangasLocalStorage,
+    getMangaLocalStorage: getMangaLocalStorage,
     getChapter,
     saveBookmark,
     markChapterAsFinished,

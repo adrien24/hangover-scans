@@ -3,8 +3,6 @@ import {
   ArrowLeft,
   Search,
   BookOpen,
-  Clock,
-  Download,
   CheckCircle,
   AArrowDown,
   AArrowUp,
@@ -17,6 +15,8 @@ import { Badge } from "@/components/ui/badge";
 import { getAllChapters } from "@/services/getChapters.service";
 import { useBookmarkStorage } from "@/hooks/useBookmarkStorage";
 import { enumStatus } from "@/components/MangaGrid";
+import { getMangaByTitle } from "@/services/getMangas.service";
+import { Manga } from "@/services/getMangas.service";
 
 interface Chapter {
   name: string;
@@ -35,16 +35,18 @@ export interface MangaChapter {
 const MangaChapters = () => {
   const { title } = useParams();
   const [searchTerm, setSearchTerm] = useState("");
-  const [manga, setManga] = useState<MangaChapter>(null);
+  const [mangaChapters, setMangaChapters] = useState<MangaChapter>(null);
   const [allChapters, setAllChapters] = useState<Chapter[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isDescending, setIsDescending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [manga, setMangaInfo] = useState<Manga>(null);
   const [chapterToContinue, setChapterToContinue] = useState<number | null>(
     null,
   );
   const [sortAsc, setSortAsc] = useState(false);
-  const { getChapter, getManga, isChapterFinished } = useBookmarkStorage();
+  const { getChapter, getMangaLocalStorage, isChapterFinished } =
+    useBookmarkStorage();
 
   useEffect(() => {
     let mounted = true;
@@ -54,19 +56,21 @@ const MangaChapters = () => {
       setIsLoading(true);
       setError(null);
       try {
-        const mangas = await getAllChapters(title);
+        const MangaChapters = await getAllChapters(title);
+        const MangaInfo = await getMangaByTitle(title);
+        setMangaInfo(MangaInfo);
 
         if (mounted) {
-          setManga(mangas ?? null);
-          setAllChapters(mangas?.chapters ?? []);
+          setMangaChapters(MangaChapters ?? null);
+          setAllChapters(MangaChapters?.chapters ?? []);
 
-          const bookmarkedManga = getManga(title);
+          const bookmarkedManga = getMangaLocalStorage(title);
           if (bookmarkedManga && bookmarkedManga.chapters.length > 0) {
             const lastRead = bookmarkedManga.chapters.reduce((prev, curr) =>
               curr.lastUpdated > prev.lastUpdated ? curr : prev,
             );
             if (lastRead.isFinished) {
-              const apiChapters = mangas?.chapters ?? [];
+              const apiChapters = MangaChapters?.chapters ?? [];
               const nextChapter = apiChapters
                 .filter((c) => c.id > lastRead.id)
                 .sort((a, b) => a.id - b.id)[0];
@@ -114,7 +118,7 @@ const MangaChapters = () => {
       </div>
     );
   }
-  if (!manga) return;
+  if (!mangaChapters) return;
 
   const sortingFilter = () => setSortAsc((prev) => !prev);
 
@@ -140,15 +144,21 @@ const MangaChapters = () => {
                 <h1 className='text-xl font-bold text-foreground'>{title}</h1>
                 <div className='flex items-center gap-2 text-sm text-muted-foreground'>
                   <BookOpen className='w-4 h-4' />
-                  {manga.chapters?.length} chapitres
-                  <Badge variant='secondary'>{enumStatus(manga.status)}</Badge>
+                  {mangaChapters.chapters?.length} chapitres
+                  <Badge variant='secondary'>
+                    {enumStatus(mangaChapters.status)}
+                  </Badge>
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-
+      <div className='container mx-auto px-4 pt-6'>
+        <p className='text-sm text-muted-foreground line-clamp-3'>
+          {manga?.description}
+        </p>
+      </div>
       <div className='container mx-auto px-4 pt-6'>
         <Button
           variant='default'
