@@ -129,32 +129,32 @@ const MangaChapters = () => {
         <div className='container mx-auto px-4 py-4'>
           <div className='flex items-center gap-4'>
             <Link to='/'>
-              <Button variant='ghost' size='sm'>
+              <Button variant='outline' size='sm' className='py-6 px-4'>
                 <ArrowLeft className='w-4 h-4 mr-2' />
-                Back
+                Retour
               </Button>
             </Link>
-            <div className='flex items-center gap-4 flex-1'>
-              {/* <img
-                src={manga.thumbnails || '/placeholder.svg'}
+            {/* <div className='flex items-center gap-4 flex-1'>
+              <img
+                src={manga.thumbnails || "/placeholder.svg"}
                 alt={manga.title}
-                className="w-12 h-16 object-cover rounded"
-              /> */}
-              <div>
-                <h1 className='text-xl font-bold text-foreground'>{title}</h1>
-                <div className='flex items-center gap-2 text-sm text-muted-foreground'>
-                  <BookOpen className='w-4 h-4' />
-                  {mangaChapters.chapters?.length} chapitres
-                  <Badge variant='secondary'>
-                    {enumStatus(mangaChapters.status)}
-                  </Badge>
-                </div>
-              </div>
-            </div>
+                className='w-12 h-16 object-cover rounded'
+              />
+            </div> */}
           </div>
         </div>
       </div>
       <div className='container mx-auto px-4 pt-6'>
+        <div>
+          <h1 className='text-xl font-bold text-foreground mb-3'>{title}</h1>
+          <div className='flex items-center gap-2 text-sm text-muted-foreground mb-3'>
+            <BookOpen className='w-4 h-4 ' />
+            {mangaChapters.chapters?.length} chapitres
+            <Badge variant='secondary'>
+              {enumStatus(mangaChapters.status)}
+            </Badge>
+          </div>
+        </div>
         <p className='text-sm text-muted-foreground line-clamp-3'>
           {manga?.description}
         </p>
