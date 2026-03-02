@@ -134,13 +134,6 @@ const MangaChapters = () => {
                 Retour
               </Button>
             </Link>
-            {/* <div className='flex items-center gap-4 flex-1'>
-              <img
-                src={manga.thumbnails || "/placeholder.svg"}
-                alt={manga.title}
-                className='w-12 h-16 object-cover rounded'
-              />
-            </div> */}
           </div>
         </div>
       </div>
