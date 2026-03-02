@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useBookmarkStorage } from "@/hooks/useBookmarkStorage";
+import { WatchlistButton } from "@/components/WatchlistButton";
 
 interface MangaCardProps {
   id: string;
@@ -48,6 +49,16 @@ const MangaCard = ({ title, cover, status, description }: MangaCardProps) => {
           alt={title}
           className='w-full h-full object-cover transition-transform duration-300 group-hover:scale-110'
         />
+
+        {/* Watchlist Button */}
+        <div className='absolute top-2 left-2 z-10'>
+          <WatchlistButton
+            mangaTitle={title}
+            variant='icon'
+            size='icon'
+            className='bg-black/40 backdrop-blur-sm hover:bg-black/60'
+          />
+        </div>
 
         {/* Overlay on hover */}
         <div className='absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300'>

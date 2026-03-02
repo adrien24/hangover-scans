@@ -17,6 +17,7 @@ import { useBookmarkStorage } from "@/hooks/useBookmarkStorage";
 import { enumStatus } from "@/components/MangaGrid";
 import { getMangaByTitle } from "@/services/getMangas.service";
 import { Manga } from "@/services/getMangas.service";
+import { WatchlistButton } from "@/components/WatchlistButton";
 
 interface Chapter {
   name: string;
@@ -92,6 +93,7 @@ const MangaChapters = () => {
     return () => {
       mounted = false;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [title]);
 
   const filteredChapters = useMemo(
@@ -127,19 +129,28 @@ const MangaChapters = () => {
       {/* Header */}
       <div className='sticky top-0 z-50 bg-background/80 backdrop-blur-sm border-b border-border'>
         <div className='container mx-auto px-4 py-4'>
-          <div className='flex items-center gap-4'>
+          <div className='flex items-center gap-4 justify-between'>
             <Link to='/'>
               <Button variant='outline' size='sm' className='py-6 px-4'>
                 <ArrowLeft className='w-4 h-4 mr-2' />
                 Retour
               </Button>
             </Link>
+            {title && (
+              <WatchlistButton
+                mangaTitle={title}
+                variant='icon'
+                size='icon'
+              />
+            )}
           </div>
         </div>
       </div>
       <div className='container mx-auto px-4 pt-6'>
         <div>
-          <h1 className='text-xl font-bold text-foreground mb-3'>{title}</h1>
+          <div className='mb-3'>
+            <h1 className='text-xl font-bold text-foreground'>{title}</h1>
+          </div>
           <div className='flex items-center gap-2 text-sm text-muted-foreground mb-3'>
             <BookOpen className='w-4 h-4 ' />
             {mangaChapters.chapters?.length} chapitres
