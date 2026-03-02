@@ -245,16 +245,8 @@ const MangaChapters = () => {
                             <BookOpen className='w-3 h-3' />
                             {pageCount} pages
                           </span>
-                          <span className='flex items-center gap-1'>
-                            {/* <Clock className="w-3 h-3" /> */}
-                            {/* {chapter.date} */}
-                          </span>
+                          <span className='flex items-center gap-1'></span>
                         </div>
-                        {/* {chapter.description && (
-                          <p className='text-sm text-muted-foreground mt-1 line-clamp-2'>
-                            {chapter.description}
-                          </p>
-                        )} */}
                       </div>
                     </div>
 
