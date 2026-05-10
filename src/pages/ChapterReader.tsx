@@ -12,54 +12,43 @@ const ChapterReader = () => {
   const { title, id } = useParams();
   const navigate = useNavigate();
   const [showHeader, setShowHeader] = useState(false);
-  const { getMangaMode, saveMangaMode } = useReaderModeStorage();
-  const { getCurrentPage, markChapterAsFinished } = useBookmarkStorage();
+  const { saveMangaMode } = useReaderModeStorage();
+  const { markChapterAsFinished } = useBookmarkStorage();
   const [isCarouselMode, setIsCarouselMode] = useState(true);
   const [currentPage, setCurrentPage] = useState(0);
-  const [isReady, setIsReady] = useState(false);
 
   const controller = useScansController(id, title);
+  const { userContext, totalChapters, isLoading } = controller;
 
-  // Load reader mode and current page from API
+  // Apply userContext once it arrives (single network call upstream)
   useEffect(() => {
-    const loadUserData = async () => {
-      const [mode, page] = await Promise.all([
-        getMangaMode(title),
-        getCurrentPage(title, id),
-      ]);
-      setIsCarouselMode(mode === "carousel");
-      setCurrentPage(page);
-      setIsReady(true);
-    };
-    loadUserData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [title, id]);
+    if (!userContext) return;
+    if (userContext.readerMode) {
+      setIsCarouselMode(userContext.readerMode === "carousel");
+    }
+    setCurrentPage(userContext.currentPage);
+  }, [userContext]);
 
-  // Sync with watchlist when reading
   useWatchlistSync({
     mangaTitle: title || "",
     chapterNumber: id || "",
+    totalChapters,
+    userContext,
   });
 
   // Masquer le header apres 3 secondes d'inactivite
   useEffect(() => {
     if (!showHeader) return;
-
-    const timer = setTimeout(() => {
-      setShowHeader(false);
-    }, 3000);
-
+    const timer = setTimeout(() => setShowHeader(false), 3000);
     return () => clearTimeout(timer);
   }, [showHeader]);
 
-  const handlePageClick = () => {
-    setShowHeader(!showHeader);
-  };
+  const handlePageClick = () => setShowHeader((s) => !s);
 
   const handleToggleMode = () => {
     setIsCarouselMode((prevMode) => {
       const newMode = !prevMode;
-      saveMangaMode(title!, newMode ? "carousel" : "vertical");
+      if (title) saveMangaMode(title, newMode ? "carousel" : "vertical");
       return newMode;
     });
   };
@@ -76,7 +65,7 @@ const ChapterReader = () => {
     navigate(`/manga/${title}/chapter/${nextChapterId}`);
   };
 
-  if (!isReady) {
+  if (isLoading) {
     return (
       <div className='w-full h-screen flex items-center justify-center bg-black'>
         <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-primary'></div>

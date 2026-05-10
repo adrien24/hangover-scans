@@ -6,6 +6,12 @@ import type {
   MangaReaderMode,
   SyncLocalStoragePayload,
   WatchlistEnrichedItem,
+  ExistsEnvelope,
+  UserdataState,
+  UpdateProgressPayload,
+  UpdateProgressResponse,
+  BatchBookmarkUpdate,
+  BatchBookmarkResponse,
 } from "@/types/userdata.types";
 
 const url = import.meta.env.VITE_BACKEND_URL;
@@ -31,6 +37,25 @@ async function handleResponse<T>(response: Response): Promise<T> {
   return response.json();
 }
 
+async function unwrapExists<T>(response: Response): Promise<T | null> {
+  const payload = await handleResponse<ExistsEnvelope<T>>(response);
+  return payload.exists ? payload.data : null;
+}
+
+// ─── Aggregated state ───
+
+export async function getUserdataState(): Promise<UserdataState> {
+  const response = await fetch(url + "/api/userdata/state", {
+    headers: authHeaders(),
+  });
+  // Tolerate a backend that hasn't deployed /state yet — fall back to an
+  // empty cache rather than retry-storming on 404.
+  if (response.status === 404) {
+    return { bookmarks: [], watchlist: [], readerModes: [] };
+  }
+  return handleResponse(response);
+}
+
 // ─── Bookmarks ───
 
 export async function getAllBookmarks(): Promise<MangaBookmark[]> {
@@ -47,8 +72,7 @@ export async function getBookmark(
     url + `/api/userdata/bookmarks/${encodeURIComponent(mangaTitle)}`,
     { headers: authHeaders() }
   );
-  if (response.status === 404) return null;
-  return handleResponse(response);
+  return unwrapExists<MangaBookmark>(response);
 }
 
 export async function getBookmarkChapter(
@@ -60,8 +84,7 @@ export async function getBookmarkChapter(
       `/api/userdata/bookmarks/${encodeURIComponent(mangaTitle)}/chapters/${chapterId}`,
     { headers: authHeaders() }
   );
-  if (response.status === 404) return null;
-  return handleResponse(response);
+  return unwrapExists<BookmarkChapter>(response);
 }
 
 export async function saveBookmark(
@@ -97,13 +120,27 @@ export async function markChapterAsFinished(
   await handleResponse(response);
 }
 
+export async function batchUpdateBookmarks(
+  updates: BatchBookmarkUpdate[]
+): Promise<BatchBookmarkResponse> {
+  const response = await fetch(url + "/api/userdata/bookmarks/batch", {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ updates }),
+  });
+  return handleResponse(response);
+}
+
 // ─── Watchlist ───
 
 export async function getEnrichedWatchlist(): Promise<WatchlistEnrichedItem[]> {
   const response = await fetch(url + "/api/mangas/watchlist", {
     headers: authHeaders(),
   });
-  const data = await handleResponse<{ count: number; data: WatchlistEnrichedItem[] }>(response);
+  const data = await handleResponse<{
+    count: number;
+    data: WatchlistEnrichedItem[];
+  }>(response);
   return data.data;
 }
 
@@ -121,8 +158,7 @@ export async function getWatchlistItem(
     url + `/api/userdata/watchlist/${encodeURIComponent(mangaTitle)}`,
     { headers: authHeaders() }
   );
-  if (response.status === 404) return null;
-  return handleResponse(response);
+  return unwrapExists<WatchlistItem>(response);
 }
 
 export async function addToWatchlist(
@@ -173,9 +209,8 @@ export async function getReaderMode(
     url + `/api/userdata/reader-modes/${encodeURIComponent(mangaTitle)}`,
     { headers: authHeaders() }
   );
-  if (response.status === 404) return "carousel";
-  const data: MangaReaderMode = await handleResponse(response);
-  return data.mode;
+  const data = await unwrapExists<MangaReaderMode>(response);
+  return data?.mode ?? "carousel";
 }
 
 export async function saveReaderMode(
@@ -193,11 +228,26 @@ export async function saveReaderMode(
   await handleResponse(response);
 }
 
+// ─── Progress (transactionnel bookmark + watchlist) ───
+
+export async function updateProgress(
+  payload: UpdateProgressPayload
+): Promise<UpdateProgressResponse> {
+  const response = await fetch(url + "/api/userdata/progress", {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify(payload),
+  });
+  return handleResponse(response);
+}
+
 // ─── Sync localStorage → DB ───
 
 export async function syncLocalStorageToDb(
   payload: SyncLocalStoragePayload
-): Promise<{ imported: { bookmarks: number; watchlist: number; readerModes: number } }> {
+): Promise<{
+  imported: { bookmarks: number; watchlist: number; readerModes: number };
+}> {
   const response = await fetch(url + "/api/userdata/sync", {
     method: "POST",
     headers: authHeaders(),

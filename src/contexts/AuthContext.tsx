@@ -8,6 +8,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import type { User, LoginPayload, RegisterPayload } from "@/types/auth.types";
 import * as authService from "@/services/auth.service";
+import { userFromJwt } from "@/lib/jwt";
 
 interface AuthContextType {
   user: User | null;
@@ -34,17 +35,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    // Decode JWT locally for immediate UI — no network roundtrip required.
+    const localUser = userFromJwt(storedToken);
+    if (localUser) {
+      setToken(storedToken);
+      setUser(localUser);
+      setIsLoading(false);
+    }
+
+    // Revalidate in background. If the token is rejected, log out.
     authService
       .getMe(storedToken)
-      .then((user) => {
+      .then((freshUser) => {
         setToken(storedToken);
-        setUser(user);
+        setUser(freshUser);
+        localStorage.setItem("auth_user", JSON.stringify(freshUser));
       })
       .catch(() => {
         localStorage.removeItem("auth_token");
         localStorage.removeItem("auth_user");
+        setToken(null);
+        setUser(null);
       })
-      .finally(() => setIsLoading(false));
+      .finally(() => {
+        if (!localUser) setIsLoading(false);
+      });
   }, []);
 
   const login = useCallback(

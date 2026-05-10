@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { getAllScans } from "@/services/getAllScans.service";
+import type { UserContext } from "@/types/userdata.types";
 
 type Chapter = {
   id: number;
@@ -15,6 +16,8 @@ export type allChaptersResponse = {
 
 export function useScansController(id?: string | number, title?: string) {
   const [scans, setScans] = useState<Chapter | null>(null);
+  const [totalChapters, setTotalChapters] = useState<number>(0);
+  const [userContext, setUserContext] = useState<UserContext | null>(null);
   const [isReading, setIsReading] = useState(false);
   const [imagesScans, setImagesScans] = useState<
     { url: string; loaded: boolean }[]
@@ -23,21 +26,30 @@ export function useScansController(id?: string | number, title?: string) {
   const [showHeader, setShowHeader] = useState(false);
   const [isNextChapterAvailable, setIsNextChapterAvailable] = useState(true);
   const [isSlider, setIsSlider] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     let mounted = true;
 
     const load = async () => {
       if (!id && !title) return;
+      setIsLoading(true);
       try {
-        const data = await getAllScans(String(id), String(title));
+        const { scan, totalChapters, userContext } = await getAllScans(
+          String(id),
+          String(title)
+        );
 
         if (!mounted) return;
-        setScans(data);
-        setImagesScans(data.images.map((img) => ({ url: img, loaded: false })));
-        setTitleScan(data.title);
+        setScans(scan);
+        setImagesScans(scan.images.map((img) => ({ url: img, loaded: false })));
+        setTitleScan(scan.title);
+        setTotalChapters(totalChapters);
+        setUserContext(userContext);
       } catch (err) {
         console.error("Failed to load scans in hook", err);
+      } finally {
+        if (mounted) setIsLoading(false);
       }
     };
 
@@ -52,48 +64,6 @@ export function useScansController(id?: string | number, title?: string) {
     setShowHeader((s) => !s);
   }, []);
 
-  const updateHistoryPages = useCallback(
-    (
-      nameScan: string,
-      chapter: number,
-      pages: number,
-      finished: "reading" | "read" = "reading",
-    ) => {
-      const history = localStorage.getItem(`scans-${nameScan}`);
-      let historyParsed: {
-        chapter: number;
-        pages: number;
-        finished: "reading" | "read";
-      }[] = [];
-      if (history) historyParsed = JSON.parse(history);
-
-      const index = historyParsed.findIndex((item) => item.chapter === chapter);
-
-      if (index !== -1) {
-        historyParsed[index].pages = pages;
-        historyParsed[index].finished = finished;
-      } else {
-        historyParsed.push({ chapter, pages, finished });
-      }
-      localStorage.setItem(`scans-${nameScan}`, JSON.stringify(historyParsed));
-    },
-    [],
-  );
-
-  const setPagesScans = useCallback((nameScan: string, chapter: number) => {
-    const history = localStorage.getItem(`scans-${nameScan}`);
-    let historyParsed: {
-      chapter: number;
-      pages: number;
-      finished: "reading" | "read";
-    }[] = [];
-    if (history) historyParsed = JSON.parse(history);
-
-    const index = historyParsed.findIndex((item) => item.chapter === chapter);
-
-    return historyParsed[index] ? historyParsed[index].pages : 0;
-  }, []);
-
   const nextChapterAvailable = useCallback(
     (currentId: string, allChapters: allChaptersResponse[]) => {
       const nextChapter = parseInt(currentId) + 1;
@@ -103,19 +73,19 @@ export function useScansController(id?: string | number, title?: string) {
       setIsNextChapterAvailable(available);
       return available;
     },
-    [],
+    []
   );
 
   const scansOrientation = useCallback(
     (scanName: string) => {
       localStorage.setItem(
         `scans-orientation-${scanName}`,
-        isSlider ? "notSlider" : "slider",
+        isSlider ? "notSlider" : "slider"
       );
       const orientation = localStorage.getItem(`scans-orientation-${scanName}`);
       return orientation;
     },
-    [isSlider],
+    [isSlider]
   );
 
   const menuItemsClicked = useCallback(
@@ -125,11 +95,14 @@ export function useScansController(id?: string | number, title?: string) {
         scansOrientation(scansName);
       }
     },
-    [scansOrientation],
+    [scansOrientation]
   );
 
   return {
     scans,
+    totalChapters,
+    userContext,
+    isLoading,
     isReading,
     imagesScans,
     titleScan,
@@ -137,8 +110,6 @@ export function useScansController(id?: string | number, title?: string) {
     isNextChapterAvailable,
     isSlider,
     toggleHeader,
-    updateHistoryPages,
-    setPagesScans,
     nextChapterAvailable,
     scansOrientation,
     menuItemsClicked,

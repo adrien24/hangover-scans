@@ -17,7 +17,6 @@ import { useWatchlistStorage } from "@/hooks/useWatchlistStorage";
 import type { WatchlistStatus } from "@/hooks/useWatchlistStorage";
 import {
   getEnrichedWatchlist,
-  getAllWatchlist,
   syncLocalStorageToDb,
 } from "@/services/userdata.service";
 import type {
@@ -122,30 +121,20 @@ const Watchlist = () => {
     const loadWatchlist = async () => {
       setIsLoading(true);
       try {
-        const [enrichedItems, userItems] = await Promise.all([
-          getEnrichedWatchlist(),
-          getAllWatchlist(),
-        ]);
+        const enrichedItems = await getEnrichedWatchlist();
 
-        const userMap = new Map(userItems.map((item) => [item.title, item]));
-
-        const items: EnrichedWatchlistItem[] = enrichedItems.map((item) => {
-          const userItem = userMap.get(item.title);
-          return {
-            id: item.id,
-            title: item.title,
-            cover: item.thumbnails,
-            genre: item.genres[0]?.name || "Unknown",
-            rating: item.mean,
-            totalChapters: parseInt(item.lastChapter) || 0,
-            readChapters: parseInt(item.lastChapterRead) || 0,
-            lastChapterRead: item.lastChapterRead || undefined,
-            status: (userItem?.status as WatchlistStatus) || "En cours",
-            lastRead: userItem?.lastRead
-              ? formatLastReadTime(userItem.lastRead)
-              : undefined,
-          };
-        });
+        const items: EnrichedWatchlistItem[] = enrichedItems.map((item) => ({
+          id: item.id,
+          title: item.title,
+          cover: item.thumbnails,
+          genre: item.genres[0]?.name || "Unknown",
+          rating: item.mean,
+          totalChapters: parseInt(item.lastChapter) || 0,
+          readChapters: parseInt(item.lastChapterRead) || 0,
+          lastChapterRead: item.lastChapterRead || undefined,
+          status: item.status || "En cours",
+          lastRead: item.lastRead ? formatLastReadTime(item.lastRead) : undefined,
+        }));
 
         setWatchlist(items);
       } catch (error) {

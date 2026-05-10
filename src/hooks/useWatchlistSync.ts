@@ -1,73 +1,60 @@
 import { useEffect } from "react";
 import { useWatchlistStorage } from "./useWatchlistStorage";
-import { useBookmarkStorage } from "./useBookmarkStorage";
+import type { UserContext, WatchlistStatus } from "@/types/userdata.types";
 
 interface UseWatchlistSyncOptions {
   mangaTitle: string;
   chapterNumber: string | number;
   totalChapters?: number;
+  userContext: UserContext | null;
 }
 
 /**
- * Hook to automatically sync watchlist with reading progress
- * - Adds manga to watchlist when user starts reading (if not already in watchlist)
- * - Updates lastChapterRead and lastRead timestamp when reading
- * - Updates status to "Termine" when all chapters are read
+ * Reacts to chapter opening:
+ * - adds the manga to the watchlist (status "En cours") if it isn't yet
+ * - refreshes lastChapterRead / lastRead
+ * - bumps status to "Terminé" when all chapters are read
+ *
+ * Operates from the already-loaded userContext (no extra GETs).
  */
 export function useWatchlistSync({
   mangaTitle,
   chapterNumber,
   totalChapters,
+  userContext,
 }: UseWatchlistSyncOptions) {
-  const {
-    isInWatchlist,
-    addToWatchlist,
-    updateWatchlistItem,
-    getWatchlistItem,
-  } = useWatchlistStorage();
-  const { getBookmark } = useBookmarkStorage();
+  const { addToWatchlist, updateWatchlistItem } = useWatchlistStorage();
 
   useEffect(() => {
-    if (!mangaTitle || !chapterNumber) return;
+    if (!mangaTitle || !chapterNumber || !userContext) return;
 
-    const syncWatchlist = async () => {
-      const inWatchlist = await isInWatchlist(mangaTitle);
-      const mangaBookmarks = await getBookmark(mangaTitle);
-      const currentChapter = String(chapterNumber);
+    const currentChapter = String(chapterNumber);
+    const { watchlist, bookmark } = userContext;
 
-      if (!inWatchlist) {
-        await addToWatchlist(mangaTitle, "En cours", currentChapter);
-        return;
-      }
+    if (!watchlist.inWatchlist) {
+      addToWatchlist(mangaTitle, "En cours", currentChapter);
+      return;
+    }
 
-      const watchlistItem = await getWatchlistItem(mangaTitle);
-      if (!watchlistItem) return;
-
-      let newStatus = watchlistItem.status;
-      if (mangaBookmarks && totalChapters) {
-        const finishedChapters = mangaBookmarks.chapters.filter(
-          (ch) => ch.isFinished
-        );
-
-        if (finishedChapters.length >= totalChapters) {
-          newStatus = "Terminé";
-        } else if (watchlistItem.status === "À lire") {
-          newStatus = "En cours";
-        }
-      } else if (watchlistItem.status === "À lire") {
+    let newStatus: WatchlistStatus = watchlist.status ?? "En cours";
+    if (bookmark && totalChapters) {
+      const finishedCount = bookmark.chapters.filter((c) => c.isFinished).length;
+      if (finishedCount >= totalChapters) {
+        newStatus = "Terminé";
+      } else if (newStatus === "À lire") {
         newStatus = "En cours";
       }
+    } else if (newStatus === "À lire") {
+      newStatus = "En cours";
+    }
 
-      await updateWatchlistItem(mangaTitle, {
-        status: newStatus,
-        lastChapterRead: currentChapter,
-        lastRead: Date.now(),
-      });
-    };
-
-    syncWatchlist();
+    updateWatchlistItem(mangaTitle, {
+      status: newStatus,
+      lastChapterRead: currentChapter,
+      lastRead: Date.now(),
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mangaTitle, chapterNumber, totalChapters]);
+  }, [mangaTitle, chapterNumber, totalChapters, userContext]);
 
   return null;
 }

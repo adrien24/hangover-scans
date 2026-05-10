@@ -1,11 +1,9 @@
-import { useState, useEffect } from "react";
 import { Play, CheckCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { useBookmarkStorage } from "@/hooks/useBookmarkStorage";
-import type { MangaBookmark } from "@/hooks/useBookmarkStorage";
+import { useBookmarkFromCache } from "@/hooks/useUserdataState";
 import { WatchlistButton } from "@/components/WatchlistButton";
 
 interface MangaCardProps {
@@ -20,33 +18,24 @@ interface MangaCardProps {
 }
 
 const MangaCard = ({ title, cover, status, description }: MangaCardProps) => {
-  const { getBookmark } = useBookmarkStorage();
-  const [mangaBookmark, setMangaBookmark] = useState<MangaBookmark | null>(null);
+  const mangaBookmark = useBookmarkFromCache(title);
 
-  useEffect(() => {
-    getBookmark(title).then(setMangaBookmark);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [title]);
-
-  // Recuperer le dernier chapitre lu
   const lastReadChapter = mangaBookmark?.chapters
-    .sort((a, b) => b.id - a.id)
-    .at(0);
+    .slice()
+    .sort((a, b) => b.id - a.id)[0];
 
-  // Determiner le statut d'affichage
   const getButtonDisplay = () => {
     if (!lastReadChapter) {
       return { text: "Lire", icon: Play, variant: "default" };
     }
-
     if (lastReadChapter.isFinished) {
       return { text: "Chapitre fini", icon: CheckCircle, variant: "secondary" };
     }
-
     return { text: "Continuer", icon: Play, variant: "default" };
   };
 
   const buttonDisplay = getButtonDisplay();
+
   return (
     <Card className='group relative overflow-hidden bg-manga-card border-border hover:bg-manga-card-hover transition-all duration-300 hover:scale-105 hover:shadow-xl'>
       {/* Cover Image */}

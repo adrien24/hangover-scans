@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Heart, BookOpen, BookCheck, Pause, BookmarkPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -7,9 +7,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  useWatchlistStorage,
-} from "@/hooks/useWatchlistStorage";
+import { useWatchlistStorage } from "@/hooks/useWatchlistStorage";
+import { useWatchlistItemFromCache } from "@/hooks/useUserdataState";
 import type { WatchlistStatus } from "@/hooks/useWatchlistStorage";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -37,31 +36,17 @@ export function WatchlistButton({
   size = "icon",
   className,
 }: WatchlistButtonProps) {
-  const {
-    addToWatchlist,
-    getWatchlistItem,
-    removeFromWatchlist,
-  } = useWatchlistStorage();
+  const { addToWatchlist, removeFromWatchlist } = useWatchlistStorage();
+  const watchlistItem = useWatchlistItemFromCache(mangaTitle);
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
-  const [inWatchlist, setInWatchlist] = useState(false);
-  const [currentStatus, setCurrentStatus] = useState<WatchlistStatus | null>(null);
 
-  useEffect(() => {
-    const load = async () => {
-      const item = await getWatchlistItem(mangaTitle);
-      setInWatchlist(item !== null);
-      setCurrentStatus(item?.status ?? null);
-    };
-    load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mangaTitle]);
+  const inWatchlist = watchlistItem !== null;
+  const currentStatus = watchlistItem?.status ?? null;
 
   const handleStatusSelect = async (status: WatchlistStatus) => {
-    await addToWatchlist(mangaTitle, status);
     const wasInWatchlist = inWatchlist;
-    setInWatchlist(true);
-    setCurrentStatus(status);
+    await addToWatchlist(mangaTitle, status);
     setOpen(false);
 
     toast({
@@ -73,8 +58,6 @@ export function WatchlistButton({
   const handleRemove = async (e: React.MouseEvent) => {
     e.stopPropagation();
     await removeFromWatchlist(mangaTitle);
-    setInWatchlist(false);
-    setCurrentStatus(null);
     setOpen(false);
 
     toast({
@@ -93,7 +76,7 @@ export function WatchlistButton({
           className={cn(
             "hover:bg-transparent",
             className,
-            inWatchlist ? "text-red-500" : "",
+            inWatchlist ? "text-red-500" : ""
           )}
           onClick={(e) => e.stopPropagation()}
         >
@@ -101,7 +84,7 @@ export function WatchlistButton({
             className={cn(
               "h-6 w-6",
               size === "sm" && "h-14 w-14",
-              inWatchlist && "fill-current",
+              inWatchlist && "fill-current"
             )}
             strokeWidth={2}
             style={{ stroke: "white" }}
@@ -125,7 +108,7 @@ export function WatchlistButton({
               onClick={() => handleStatusSelect(status as WatchlistStatus)}
               className={cn(
                 "cursor-pointer",
-                currentStatus === status && "bg-accent",
+                currentStatus === status && "bg-accent"
               )}
             >
               <Icon className='mr-2 h-4 w-4' />

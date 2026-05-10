@@ -1,3 +1,5 @@
+import type { UserState } from "@/types/userdata.types";
+
 const url = import.meta.env.VITE_BACKEND_URL;
 
 export interface Manga {
@@ -15,32 +17,33 @@ export interface Manga {
   status: string;
   genres: string[];
   authors: string[];
+  userState?: UserState;
+}
+
+function authOrPublicHeaders(): Record<string, string> {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  const token = localStorage.getItem("auth_token");
+  if (token) headers.Authorization = `Bearer ${token}`;
+  return headers;
 }
 
 export const getManga = async (): Promise<Manga[]> => {
-  console.log("start");
-
   const response = await fetch(url + "/api/mangas", {
     method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: authOrPublicHeaders(),
   });
 
   const result = await response.json();
-
   return result.data;
 };
 
-export const getMangaByTitle = async (title): Promise<Manga> => {
+export const getMangaByTitle = async (title: string): Promise<Manga> => {
   const response = await fetch(url + `/api/mangas/${title}`, {
     method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: authOrPublicHeaders(),
   });
 
-  const result = await response.json();
-
-  return result;
+  return response.json();
 };
