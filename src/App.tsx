@@ -5,6 +5,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import { PWAUpdatePrompt } from "@/components/PWAUpdatePrompt";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Watchlist from "./pages/Watchlist";
 import MangaChapters from "./pages/MangaChapters";
@@ -15,6 +17,9 @@ import Latest from "./pages/Latest";
 import Genres from "./pages/Genres";
 import TopRated from "./pages/TopRated";
 import AllManga from "./pages/AllManga";
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
+import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -35,20 +40,24 @@ const App = () => (
       <PWAUpdatePrompt />
       <BrowserRouter>
         <ScrollToTop />
-        <Routes>
-          <Route path='/' element={<Index />} />
-          <Route path='/watchlist' element={<Watchlist />} />
-          <Route path='/account' element={<Account />} />
-          <Route path='/popular' element={<Popular />} />
-          <Route path='/latest' element={<Latest />} />
-          <Route path='/genres' element={<Genres />} />
-          <Route path='/top-rated' element={<TopRated />} />
-          <Route path='/all-manga' element={<AllManga />} />
-          <Route path='/manga/:title' element={<MangaChapters />} />
-          <Route path='/manga/:title/chapter/:id' element={<ChapterReader />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path='*' element={<NotFound />} />
-        </Routes>
+        <AuthProvider>
+          <Routes>
+            <Route path='/login' element={<Login />} />
+            <Route path='/signup' element={<Signup />} />
+            <Route path='/reset-password' element={<ResetPassword />} />
+            <Route path='/' element={<ProtectedRoute><Index /></ProtectedRoute>} />
+            <Route path='/watchlist' element={<ProtectedRoute><Watchlist /></ProtectedRoute>} />
+            <Route path='/account' element={<ProtectedRoute><Account /></ProtectedRoute>} />
+            <Route path='/popular' element={<ProtectedRoute><Popular /></ProtectedRoute>} />
+            <Route path='/latest' element={<ProtectedRoute><Latest /></ProtectedRoute>} />
+            <Route path='/genres' element={<ProtectedRoute><Genres /></ProtectedRoute>} />
+            <Route path='/top-rated' element={<ProtectedRoute><TopRated /></ProtectedRoute>} />
+            <Route path='/all-manga' element={<ProtectedRoute><AllManga /></ProtectedRoute>} />
+            <Route path='/manga/:title' element={<ProtectedRoute><MangaChapters /></ProtectedRoute>} />
+            <Route path='/manga/:title/chapter/:id' element={<ProtectedRoute><ChapterReader /></ProtectedRoute>} />
+            <Route path='*' element={<NotFound />} />
+          </Routes>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

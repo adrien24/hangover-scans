@@ -5,8 +5,11 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BookOpen, Calendar, Clock, Star, Settings, Edit, LogOut } from "lucide-react";
 import MangaNavigation from "@/components/MangaNavigation";
+import { useAuth } from "@/hooks/useAuth";
 
 const Account = () => {
+  const { user, logout } = useAuth();
+
   const userStats = {
     totalRead: 156,
     chaptersRead: 2847,
@@ -58,14 +61,14 @@ const Account = () => {
             <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
               <Avatar className="w-24 h-24">
                 <AvatarImage src="/placeholder.svg" alt="Profile" />
-                <AvatarFallback className="text-2xl">JD</AvatarFallback>
+                <AvatarFallback className="text-2xl">{user?.username?.substring(0, 2).toUpperCase() || "??"}</AvatarFallback>
               </Avatar>
               
               <div className="flex-1">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
                   <div>
-                    <h1 className="text-3xl font-bold text-foreground mb-2">John Doe</h1>
-                    <p className="text-muted-foreground mb-2">Manga enthusiast since {userStats.joinDate}</p>
+                    <h1 className="text-3xl font-bold text-foreground mb-2">{user?.username || "Utilisateur"}</h1>
+                    <p className="text-muted-foreground mb-2">{user?.email}</p>
                     <Badge variant="secondary" className="mb-4">Premium Reader</Badge>
                   </div>
                   <div className="flex gap-2">
@@ -77,9 +80,9 @@ const Account = () => {
                       <Settings className="w-4 h-4 mr-2" />
                       Settings
                     </Button>
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline" size="sm" onClick={logout}>
                       <LogOut className="w-4 h-4 mr-2" />
-                      Logout
+                      Se deconnecter
                     </Button>
                   </div>
                 </div>

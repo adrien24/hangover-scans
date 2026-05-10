@@ -1,12 +1,21 @@
-import { Search, User, Bookmark, Settings } from "lucide-react";
+import { Search, User, Bookmark, Settings, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
 
 const MangaNavigation = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
+  const { user, logout } = useAuth();
 
   return (
     <nav className='sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border'>
@@ -75,17 +84,29 @@ const MangaNavigation = () => {
             >
               <Bookmark className='h-5 w-5' />
             </Button>
-            <Button variant='ghost' size='icon' className='hover:bg-manga-card'>
-              <Settings className='h-5 w-5' />
-            </Button>
-            <Button
-              variant='ghost'
-              size='icon'
-              className='hover:bg-manga-card'
-              onClick={() => navigate("/account")}
-            >
-              <User className='h-5 w-5' />
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant='ghost' size='icon' className='hover:bg-manga-card'>
+                  <User className='h-5 w-5' />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align='end'>
+                <div className='px-2 py-1.5 text-sm font-medium'>{user?.username}</div>
+                <div className='px-2 pb-1.5 text-xs text-muted-foreground'>{user?.email}</div>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => navigate("/account")}>
+                  Mon compte
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/watchlist")}>
+                  Ma Watchlist
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={logout}>
+                  <LogOut className='h-4 w-4 mr-2' />
+                  Se deconnecter
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>
