@@ -17,5 +17,6 @@ jobs:
           ssh -i ~/.ssh/deploy_key \
             -o StrictHostKeyChecking=no \
             -o UserKnownHostsFile=/dev/null \
+            -p ${{ secrets.DEPLOY_PORT }} \
             hangover@${{ secrets.DEPLOY_HOST }} \
             "bash /home/hangover/deploy-front.sh"
