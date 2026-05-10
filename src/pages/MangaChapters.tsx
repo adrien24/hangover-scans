@@ -151,11 +151,7 @@ const MangaChapters = () => {
               </Button>
             </Link>
             {title && (
-              <WatchlistButton
-                mangaTitle={title}
-                variant='icon'
-                size='icon'
-              />
+              <WatchlistButton mangaTitle={title} variant='icon' size='icon' />
             )}
           </div>
         </div>
@@ -291,9 +287,6 @@ const MangaChapters = () => {
                           {buttonDisplay.text}
                         </Button>
                       </Link>
-                      {/* <Button size="sm" variant="ghost">
-                        <Download className="w-4 h-4" />
-                      </Button> */}
                     </div>
                   </div>
                 </div>
@@ -305,7 +298,7 @@ const MangaChapters = () => {
         {filteredChapters.length === 0 && (
           <div className='text-center py-12'>
             <p className='text-muted-foreground'>
-              Aucun chapitres trouvé avec cette recherche.
+              Aucun chapitres trouve avec cette recherche.
             </p>
           </div>
         )}

@@ -1,19 +1,8 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
-import { getManga } from "@/services/getMangas.service";
+import { getManga, Manga } from "@/services/getMangas.service";
 import MangaCard from "./MangaCard";
 import { useNavigate } from "react-router-dom";
-
-interface Manga {
-  id: number;
-  title: string;
-  description: string | null;
-  thumbnails: string | null;
-  linkManga: string | null;
-  color: string | null;
-  site: string | null;
-  created_at: string | null;
-  status: string;
-}
+import { enumStatus } from "@/lib/utils";
 
 interface MangaGridProps {
   title: string;
@@ -21,17 +10,6 @@ interface MangaGridProps {
   searchedTitle?: string;
   onMangasLoaded?: (count: number) => void;
 }
-
-export const enumStatus = (status: string | null) => {
-  switch (status) {
-    case "completed":
-      return "Terminé";
-    case "ongoing":
-      return "En cours";
-    default:
-      return "Inconnu";
-  }
-};
 
 const SKELETON_COUNT = 6;
 const DEFAULT_DISPLAY_LIMIT = 6;

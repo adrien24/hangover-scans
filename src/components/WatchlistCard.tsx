@@ -2,7 +2,6 @@ import {
   Star,
   Play,
   Trash2,
-  Clock,
   CheckCircle,
   BookOpen,
   Pause,
@@ -28,6 +27,7 @@ interface WatchlistCardProps {
   rating: number;
   totalChapters: number;
   readChapters: number;
+  lastChapterRead?: string;
   status: WatchlistStatus;
   lastRead?: string;
   onRemove: () => void;
@@ -72,6 +72,7 @@ const WatchlistCard = ({
   rating,
   totalChapters,
   readChapters,
+  lastChapterRead,
   status,
   lastRead,
   onRemove,
@@ -79,7 +80,7 @@ const WatchlistCard = ({
   onContinueReading,
 }: WatchlistCardProps) => {
   const progressPercentage =
-    totalChapters > 0 ? (readChapters / totalChapters) * 100 : 0;
+    totalChapters > 0 ? Math.min((readChapters / totalChapters) * 100, 100) : 0;
   const statusInfo = statusConfig[status];
   const StatusIcon = statusInfo.icon;
 
@@ -178,7 +179,7 @@ const WatchlistCard = ({
               <div className='flex items-center justify-between text-sm mb-1'>
                 <span className='text-muted-foreground'>Progression</span>
                 <span className='text-foreground font-medium'>
-                  {readChapters}/{totalChapters}
+                  {lastChapterRead ?? readChapters}/{totalChapters}
                 </span>
               </div>
               <Progress value={progressPercentage} className='h-2' />

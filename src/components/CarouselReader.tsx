@@ -87,11 +87,11 @@ const CarouselReader = memo(
 
       const onViewportChange = () => {
         if (vv.scale > 1.01) {
-          // Zoomé : autoriser le déplacement dans toutes les directions + désactiver Embla
+          // Zoome : autoriser le deplacement dans toutes les directions + desactiver Embla
           emblaViewport.style.touchAction = "pan-x pan-y pinch-zoom";
           api.reInit({ watchDrag: false });
         } else {
-          // Zoom normal : réactiver Embla, swipe horizontal uniquement
+          // Zoom normal : reactiver Embla, swipe horizontal uniquement
           emblaViewport.style.touchAction = "pan-y pinch-zoom";
           api.reInit({ watchDrag: true });
         }
