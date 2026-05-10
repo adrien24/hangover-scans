@@ -33,6 +33,9 @@ const CarouselReader = memo(
     const { saveBookmark } = useBookmarkStorage();
     const loadedIndices = useRef(new Set<number>());
 
+    const saveBookmarkRef = useRef(saveBookmark);
+    saveBookmarkRef.current = saveBookmark;
+
     useEffect(() => {
       setLoadedCount(0);
       loadedIndices.current.clear();
@@ -53,7 +56,7 @@ const CarouselReader = memo(
 
       const handleSelect = () => {
         const currentIndex = api.selectedScrollSnap();
-        saveBookmark(mangaTitle, Number(chapterId), currentIndex, false);
+        saveBookmarkRef.current(mangaTitle, Number(chapterId), currentIndex, false);
       };
 
       api.on("select", handleSelect);
@@ -61,22 +64,22 @@ const CarouselReader = memo(
       return () => {
         api.off("select", handleSelect);
       };
-    }, [api, mangaTitle, chapterId, saveBookmark]);
+    }, [api, mangaTitle, chapterId]);
 
-    // Aller à la page sauvegardée au chargement (après que toutes les images soient chargées)
+    // Aller a la page sauvegardee au chargement (apres que toutes les images soient chargees)
     useEffect(() => {
       if (!api || !allImagesLoaded) return;
       api.scrollTo(currentPage);
     }, [api, allImagesLoaded, currentPage]);
 
-    // Désactiver le swipe d'Embla quand le navigateur est zoomé (scale > 1)
-    // et le réactiver uniquement quand on revient au zoom normal.
+    // Desactiver le swipe d'Embla quand le navigateur est zoome (scale > 1)
+    // et le reactiver uniquement quand on revient au zoom normal.
     useEffect(() => {
       if (!api) return;
       const emblaViewport = api.containerNode().parentElement;
       if (!emblaViewport) return;
 
-      // Zoom normal : Embla gère le swipe horizontal, on autorise pinch-zoom
+      // Zoom normal : Embla gere le swipe horizontal, on autorise pinch-zoom
       emblaViewport.style.touchAction = "pan-y pinch-zoom";
 
       const vv = window.visualViewport;

@@ -1,122 +1,90 @@
-interface Chapter {
-  id: number;
-  currentPage: number;
-  isFinished: boolean;
-  lastUpdated: number;
-}
+import type { MangaBookmark, BookmarkChapter } from "@/types/userdata.types";
+import * as userdataService from "@/services/userdata.service";
 
-interface MangaBookmark {
-  title: string;
-  chapters: Chapter[];
-}
-
-const BOOKMARKS_STORAGE_KEY = "manga-bookmarks";
+export type { MangaBookmark, BookmarkChapter };
 
 export function useBookmarkStorage() {
-  const getMangasLocalStorage = (): MangaBookmark[] => {
+  const getAllBookmarks = async (): Promise<MangaBookmark[]> => {
     try {
-      const stored = localStorage.getItem(BOOKMARKS_STORAGE_KEY);
-      return stored ? JSON.parse(stored) : [];
+      return await userdataService.getAllBookmarks();
     } catch {
       return [];
     }
   };
 
-  const getMangaLocalStorage = (mangaTitle?: string): MangaBookmark | null => {
+  const getBookmark = async (
+    mangaTitle?: string
+  ): Promise<MangaBookmark | null> => {
     if (!mangaTitle) return null;
-    const mangas = getMangasLocalStorage();
-    return mangas.find((m) => m.title === mangaTitle) || null;
+    try {
+      return await userdataService.getBookmark(mangaTitle);
+    } catch {
+      return null;
+    }
   };
 
-  const getChapter = (
+  const getChapter = async (
     mangaTitle?: string,
-    chapterId?: string | number,
-  ): Chapter | null => {
+    chapterId?: string | number
+  ): Promise<BookmarkChapter | null> => {
     if (!mangaTitle || chapterId === undefined) return null;
-    const manga = getMangaLocalStorage(mangaTitle);
-    if (!manga) return null;
-    const numChapterId =
-      typeof chapterId === "string" ? parseInt(chapterId) : chapterId;
-    return manga.chapters.find((c) => c.id === numChapterId) || null;
+    try {
+      const numChapterId =
+        typeof chapterId === "string" ? parseInt(chapterId) : chapterId;
+      return await userdataService.getBookmarkChapter(mangaTitle, numChapterId);
+    } catch {
+      return null;
+    }
   };
 
-  const saveBookmark = (
+  const saveBookmark = async (
     mangaTitle: string,
     chapterId: number,
     currentPage: number,
-    isFinished: boolean = false,
-  ) => {
-    const mangas = getMangasLocalStorage();
-    let manga = mangas.find((m) => m.title === mangaTitle);
-
-    if (!manga) {
-      manga = { title: mangaTitle, chapters: [] };
-      mangas.push(manga);
-    }
-
-    let chapter = manga.chapters.find((c) => c.id === chapterId);
-    if (!chapter) {
-      chapter = {
-        id: chapterId,
+    isFinished: boolean = false
+  ): Promise<void> => {
+    try {
+      await userdataService.saveBookmark(
+        mangaTitle,
+        chapterId,
         currentPage,
-        isFinished,
-        lastUpdated: Date.now(),
-      };
-      manga.chapters.push(chapter);
-    } else {
-      chapter.currentPage = currentPage;
-      chapter.isFinished = isFinished;
-      chapter.lastUpdated = Date.now();
+        isFinished
+      );
+    } catch {
+      // silently fail
     }
-
-    localStorage.setItem(BOOKMARKS_STORAGE_KEY, JSON.stringify(mangas));
   };
 
-  const markChapterAsFinished = (mangaTitle: string, chapterId: number) => {
-    const mangas = getMangasLocalStorage();
-    let manga = mangas.find((m) => m.title === mangaTitle);
-
-    if (!manga) {
-      manga = { title: mangaTitle, chapters: [] };
-      mangas.push(manga);
+  const markChapterAsFinished = async (
+    mangaTitle: string,
+    chapterId: number
+  ): Promise<void> => {
+    try {
+      await userdataService.markChapterAsFinished(mangaTitle, chapterId);
+    } catch {
+      // silently fail
     }
-
-    let chapter = manga.chapters.find((c) => c.id === chapterId);
-    if (!chapter) {
-      chapter = {
-        id: chapterId,
-        currentPage: 0,
-        isFinished: true,
-        lastUpdated: Date.now(),
-      };
-      manga.chapters.push(chapter);
-    } else {
-      chapter.isFinished = true;
-      chapter.lastUpdated = Date.now();
-    }
-
-    localStorage.setItem(BOOKMARKS_STORAGE_KEY, JSON.stringify(mangas));
   };
 
-  const isChapterFinished = (
+  const isChapterFinished = async (
     mangaTitle?: string,
-    chapterId?: string | number,
-  ): boolean => {
-    const chapter = getChapter(mangaTitle, chapterId);
+    chapterId?: string | number
+  ): Promise<boolean> => {
+    const chapter = await getChapter(mangaTitle, chapterId);
     return chapter?.isFinished || false;
   };
 
-  const getCurrentPage = (
+  const getCurrentPage = async (
     mangaTitle?: string,
-    chapterId?: string | number,
-  ): number => {
-    const chapter = getChapter(mangaTitle, chapterId);
+    chapterId?: string | number
+  ): Promise<number> => {
+    const chapter = await getChapter(mangaTitle, chapterId);
     return chapter?.currentPage || 0;
   };
 
   return {
-    getMangasLocalStorage: getMangasLocalStorage,
-    getMangaLocalStorage: getMangaLocalStorage,
+    getAllBookmarks,
+    getBookmark,
     getChapter,
     saveBookmark,
     markChapterAsFinished,

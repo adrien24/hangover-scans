@@ -14,7 +14,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { getAllChapters } from "@/services/getChapters.service";
 import { useBookmarkStorage } from "@/hooks/useBookmarkStorage";
-import { enumStatus } from "@/components/MangaGrid";
+import type { BookmarkChapter } from "@/hooks/useBookmarkStorage";
+import { enumStatus } from "@/lib/utils";
 import { getMangaByTitle } from "@/services/getMangas.service";
 import { Manga } from "@/services/getMangas.service";
 import { WatchlistButton } from "@/components/WatchlistButton";
@@ -43,11 +44,15 @@ const MangaChapters = () => {
   const [error, setError] = useState<string | null>(null);
   const [manga, setMangaInfo] = useState<Manga>(null);
   const [chapterToContinue, setChapterToContinue] = useState<number | null>(
-    null,
+    null
   );
   const [sortAsc, setSortAsc] = useState(false);
-  const { getChapter, getMangaLocalStorage, isChapterFinished } =
-    useBookmarkStorage();
+  const { getBookmark } = useBookmarkStorage();
+
+  // Chapter bookmark data loaded from API
+  const [chapterBookmarks, setChapterBookmarks] = useState<
+    Map<number, BookmarkChapter>
+  >(new Map());
 
   useEffect(() => {
     let mounted = true;
@@ -57,28 +62,37 @@ const MangaChapters = () => {
       setIsLoading(true);
       setError(null);
       try {
-        const MangaChapters = await getAllChapters(title);
-        const MangaInfo = await getMangaByTitle(title);
+        const [MangaChapters, MangaInfo, bookmarkedManga] = await Promise.all([
+          getAllChapters(title),
+          getMangaByTitle(title),
+          getBookmark(title),
+        ]);
+
+        if (!mounted) return;
+
         setMangaInfo(MangaInfo);
+        setMangaChapters(MangaChapters ?? null);
+        setAllChapters(MangaChapters?.chapters ?? []);
 
-        if (mounted) {
-          setMangaChapters(MangaChapters ?? null);
-          setAllChapters(MangaChapters?.chapters ?? []);
+        // Load chapter bookmark data
+        if (bookmarkedManga && bookmarkedManga.chapters.length > 0) {
+          const bookmarkMap = new Map<number, BookmarkChapter>();
+          for (const ch of bookmarkedManga.chapters) {
+            bookmarkMap.set(ch.id, ch);
+          }
+          setChapterBookmarks(bookmarkMap);
 
-          const bookmarkedManga = getMangaLocalStorage(title);
-          if (bookmarkedManga && bookmarkedManga.chapters.length > 0) {
-            const lastRead = bookmarkedManga.chapters.reduce((prev, curr) =>
-              curr.lastUpdated > prev.lastUpdated ? curr : prev,
-            );
-            if (lastRead.isFinished) {
-              const apiChapters = MangaChapters?.chapters ?? [];
-              const nextChapter = apiChapters
-                .filter((c) => c.id > lastRead.id)
-                .sort((a, b) => a.id - b.id)[0];
-              setChapterToContinue(nextChapter ? nextChapter.id : lastRead.id);
-            } else {
-              setChapterToContinue(lastRead.id);
-            }
+          const lastRead = bookmarkedManga.chapters.reduce((prev, curr) =>
+            curr.lastUpdated > prev.lastUpdated ? curr : prev
+          );
+          if (lastRead.isFinished) {
+            const apiChapters = MangaChapters?.chapters ?? [];
+            const nextChapter = apiChapters
+              .filter((c) => c.id > lastRead.id)
+              .sort((a, b) => a.id - b.id)[0];
+            setChapterToContinue(nextChapter ? nextChapter.id : lastRead.id);
+          } else {
+            setChapterToContinue(lastRead.id);
           }
         }
       } catch (err: unknown) {
@@ -104,10 +118,10 @@ const MangaChapters = () => {
             chapter.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             `Chapter ${chapter.name}`
               .toLowerCase()
-              .includes(searchTerm.toLowerCase()),
+              .includes(searchTerm.toLowerCase())
         )
         .sort((a, b) => (sortAsc ? a.id - b.id : b.id - a.id)),
-    [allChapters, searchTerm, sortAsc],
+    [allChapters, searchTerm, sortAsc]
   );
 
   if (isLoading) {
@@ -215,8 +229,8 @@ const MangaChapters = () => {
                 : Object.keys(chapter.images).length
               : 0;
 
-            const isFinished = isChapterFinished(title, chapter.id);
-            const chapterBookmark = getChapter(title, chapter.id);
+            const chapterBookmark = chapterBookmarks.get(chapter.id) || null;
+            const isFinished = chapterBookmark?.isFinished || false;
 
             const getButtonDisplay = () => {
               if (!chapterBookmark) {
