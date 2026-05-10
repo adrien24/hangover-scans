@@ -12,15 +12,28 @@ const ChapterReader = () => {
   const { title, id } = useParams();
   const navigate = useNavigate();
   const [showHeader, setShowHeader] = useState(false);
-  const { getMangaMode, saveMangaMode, initialMode } =
-    useReaderModeStorage(title);
+  const { getMangaMode, saveMangaMode } = useReaderModeStorage();
   const { getCurrentPage, markChapterAsFinished } = useBookmarkStorage();
-  const [isCarouselMode, setIsCarouselMode] = useState(
-    initialMode === "carousel",
-  );
-  const currentPage = getCurrentPage(title, id);
+  const [isCarouselMode, setIsCarouselMode] = useState(true);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [isReady, setIsReady] = useState(false);
 
   const controller = useScansController(id, title);
+
+  // Load reader mode and current page from API
+  useEffect(() => {
+    const loadUserData = async () => {
+      const [mode, page] = await Promise.all([
+        getMangaMode(title),
+        getCurrentPage(title, id),
+      ]);
+      setIsCarouselMode(mode === "carousel");
+      setCurrentPage(page);
+      setIsReady(true);
+    };
+    loadUserData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [title, id]);
 
   // Sync with watchlist when reading
   useWatchlistSync({
@@ -28,7 +41,7 @@ const ChapterReader = () => {
     chapterNumber: id || "",
   });
 
-  // Masquer le header après 3 secondes d'inactivité
+  // Masquer le header apres 3 secondes d'inactivite
   useEffect(() => {
     if (!showHeader) return;
 
@@ -46,7 +59,6 @@ const ChapterReader = () => {
   const handleToggleMode = () => {
     setIsCarouselMode((prevMode) => {
       const newMode = !prevMode;
-      // Sauvegarder le nouveau mode dans localStorage
       saveMangaMode(title!, newMode ? "carousel" : "vertical");
       return newMode;
     });
@@ -58,12 +70,19 @@ const ChapterReader = () => {
 
   const handleNextChapter = () => {
     const nextChapterId = parseInt(String(id)) + 1;
-    // Marquer le chapitre actuel comme finished
     if (title && id) {
       markChapterAsFinished(title, parseInt(String(id)));
     }
     navigate(`/manga/${title}/chapter/${nextChapterId}`);
   };
+
+  if (!isReady) {
+    return (
+      <div className='w-full h-screen flex items-center justify-center bg-black'>
+        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-primary'></div>
+      </div>
+    );
+  }
 
   return (
     <div className='w-full h-screen flex flex-col bg-black'>
