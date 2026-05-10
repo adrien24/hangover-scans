@@ -12,7 +12,7 @@ interface UseWatchlistSyncOptions {
  * Hook to automatically sync watchlist with reading progress
  * - Adds manga to watchlist when user starts reading (if not already in watchlist)
  * - Updates lastChapterRead and lastRead timestamp when reading
- * - Updates status to "Terminé" when all chapters are read
+ * - Updates status to "Termine" when all chapters are read
  */
 export function useWatchlistSync({
   mangaTitle,
@@ -25,47 +25,40 @@ export function useWatchlistSync({
     updateWatchlistItem,
     getWatchlistItem,
   } = useWatchlistStorage();
-  const { getMangaLocalStorage } = useBookmarkStorage();
+  const { getBookmark } = useBookmarkStorage();
 
   useEffect(() => {
     if (!mangaTitle || !chapterNumber) return;
 
-    const syncWatchlist = () => {
-      const inWatchlist = isInWatchlist(mangaTitle);
-      const mangaBookmarks = getMangaLocalStorage(mangaTitle);
+    const syncWatchlist = async () => {
+      const inWatchlist = await isInWatchlist(mangaTitle);
+      const mangaBookmarks = await getBookmark(mangaTitle);
       const currentChapter = String(chapterNumber);
 
-      // If not in watchlist, add it with "En cours" status
       if (!inWatchlist) {
-        addToWatchlist(mangaTitle, "En cours", currentChapter);
+        await addToWatchlist(mangaTitle, "En cours", currentChapter);
         return;
       }
 
-      // Update existing watchlist item
-      const watchlistItem = getWatchlistItem(mangaTitle);
+      const watchlistItem = await getWatchlistItem(mangaTitle);
       if (!watchlistItem) return;
 
-      // Check if all chapters are finished
       let newStatus = watchlistItem.status;
       if (mangaBookmarks && totalChapters) {
         const finishedChapters = mangaBookmarks.chapters.filter(
-          (ch) => ch.isFinished,
+          (ch) => ch.isFinished
         );
 
-        // If all chapters are read, mark as completed
         if (finishedChapters.length >= totalChapters) {
           newStatus = "Terminé";
         } else if (watchlistItem.status === "À lire") {
-          // If status is "À lire" but user is reading, change to "En cours"
           newStatus = "En cours";
         }
       } else if (watchlistItem.status === "À lire") {
-        // If we don't know total chapters but user is reading, change status
         newStatus = "En cours";
       }
 
-      // Update the watchlist item
-      updateWatchlistItem(mangaTitle, {
+      await updateWatchlistItem(mangaTitle, {
         status: newStatus,
         lastChapterRead: currentChapter,
         lastRead: Date.now(),

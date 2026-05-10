@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { ArrowLeft, Grid3X3, List, Filter, Search } from "lucide-react";
+import { ArrowLeft, Grid3X3, List, Filter, Search, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -13,14 +13,19 @@ import { Badge } from "@/components/ui/badge";
 import MangaNavigation from "@/components/MangaNavigation";
 import WatchlistCard from "@/components/WatchlistCard";
 import { useNavigate } from "react-router-dom";
+import { useWatchlistStorage } from "@/hooks/useWatchlistStorage";
+import type { WatchlistStatus } from "@/hooks/useWatchlistStorage";
 import {
-  useWatchlistStorage,
-  WatchlistStatus,
-} from "@/hooks/useWatchlistStorage";
-import { useBookmarkStorage } from "@/hooks/useBookmarkStorage";
-import { getMangasBulk } from "@/services/getMangasBulk.service";
-import { Manga } from "@/services/getMangas.service";
-import { getAllChapters } from "@/services/getChapters.service";
+  getEnrichedWatchlist,
+  getAllWatchlist,
+  syncLocalStorageToDb,
+} from "@/services/userdata.service";
+import type {
+  MangaBookmark,
+  WatchlistItem,
+  MangaReaderMode,
+} from "@/types/userdata.types";
+import { toast } from "sonner";
 
 interface EnrichedWatchlistItem {
   id: string;
@@ -30,115 +35,75 @@ interface EnrichedWatchlistItem {
   rating: number;
   totalChapters: number;
   readChapters: number;
+  lastChapterRead?: string;
   status: WatchlistStatus;
   lastRead?: string;
 }
 
 const Watchlist = () => {
   const navigate = useNavigate();
-  const { getAllWatchlist, removeFromWatchlist, updateStatus } =
-    useWatchlistStorage();
-  const { getMangaLocalStorage } = useBookmarkStorage();
+  const { removeFromWatchlist, updateStatus } = useWatchlistStorage();
 
   const [watchlist, setWatchlist] = useState<EnrichedWatchlistItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSyncing, setIsSyncing] = useState(false);
   const [viewMode, setViewMode] = useState<"grid" | "list">("list");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<string>("recently-read");
 
-  // Load and enrich watchlist data
-  useEffect(() => {
-    const loadWatchlist = async () => {
-      setIsLoading(true);
-      try {
-        const watchlistItems = getAllWatchlist();
-        console.log("Watchlist items from localStorage:", watchlistItems);
+  const hasLocalStorageData = () => {
+    try {
+      const bookmarks = localStorage.getItem("manga-bookmarks");
+      const watchlistData = localStorage.getItem("manga-watchlist");
+      const readerModes = localStorage.getItem("manga-reader-modes");
+      return !!(bookmarks || watchlistData || readerModes);
+    } catch {
+      return false;
+    }
+  };
 
-        if (watchlistItems.length === 0) {
-          setWatchlist([]);
-          setIsLoading(false);
-          return;
-        }
+  const [showSyncButton, setShowSyncButton] = useState(hasLocalStorageData());
 
-        // Get manga details from API
-        const titles = watchlistItems.map((item) => item.title);
-        console.log("Fetching bulk manga data for:", titles);
+  const handleSyncLocalStorage = async () => {
+    setIsSyncing(true);
+    try {
+      const bookmarks: MangaBookmark[] = JSON.parse(
+        localStorage.getItem("manga-bookmarks") || "[]"
+      );
+      const watchlistData: WatchlistItem[] = JSON.parse(
+        localStorage.getItem("manga-watchlist") || "[]"
+      );
+      const readerModes: MangaReaderMode[] = JSON.parse(
+        localStorage.getItem("manga-reader-modes") || "[]"
+      );
 
-        let mangasData: Manga[] = [];
-        try {
-          mangasData = await getMangasBulk(titles);
-          console.log("API bulk response:", mangasData);
-        } catch (apiError) {
-          console.error(
-            "API bulk failed, continuing with basic data:",
-            apiError,
-          );
-          // Continue with empty manga data - we'll use defaults
-        }
+      const result = await syncLocalStorageToDb({
+        bookmarks,
+        watchlist: watchlistData,
+        readerModes,
+      });
 
-        // Create a map for quick lookup
-        const mangaMap = new Map<string, Manga>();
-        mangasData.forEach((manga) => {
-          mangaMap.set(manga.title, manga);
-        });
+      localStorage.removeItem("manga-bookmarks");
+      localStorage.removeItem("manga-watchlist");
+      localStorage.removeItem("manga-reader-modes");
 
-        // Fetch chapter counts for each manga
-        const enrichedItems: EnrichedWatchlistItem[] = await Promise.all(
-          watchlistItems.map(async (item) => {
-            const mangaData = mangaMap.get(item.title);
-            console.log(`Processing ${item.title}, mangaData:`, mangaData);
-            const bookmarkData = getMangaLocalStorage(item.title);
+      setShowSyncButton(false);
+      toast.success(
+        `Synchronisation reussie : ${result.imported.bookmarks} bookmarks, ${result.imported.watchlist} watchlist, ${result.imported.readerModes} preferences`
+      );
 
-            // Get total chapters
-            let totalChapters = 0;
-            try {
-              const chaptersData = await getAllChapters(item.title);
-              totalChapters = chaptersData?.chapters?.length || 0;
-            } catch (err) {
-              console.error(`Failed to fetch chapters for ${item.title}`, err);
-            }
-
-            // Calculate read chapters
-            const readChapters =
-              bookmarkData?.chapters.filter((ch) => ch.isFinished).length || 0;
-
-            // Format last read date
-            const lastRead = item.lastRead
-              ? formatLastReadTime(item.lastRead)
-              : undefined;
-
-            return {
-              id: item.title, // Use title as ID since we don't have a separate ID
-              title: item.title,
-              cover: mangaData?.thumbnails || "",
-              genre:
-                typeof mangaData?.genres?.[0] === "string"
-                  ? mangaData.genres[0]
-                  : mangaData?.genres?.[0]?.name || "Unknown",
-              rating: mangaData?.mean || 0,
-              totalChapters,
-              readChapters,
-              status: item.status,
-              lastRead,
-            };
-          }),
-        );
-
-        console.log("Enriched watchlist items:", enrichedItems);
-        setWatchlist(enrichedItems);
-      } catch (error) {
-        console.error("Failed to load watchlist:", error);
-        // Still set empty watchlist to show the UI
-        setWatchlist([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadWatchlist();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+      window.location.reload();
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Erreur lors de la synchronisation"
+      );
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   const formatLastReadTime = (timestamp: number): string => {
     const now = Date.now();
@@ -152,6 +117,47 @@ const Watchlist = () => {
     if (weeks === 1) return "Il y a 1 semaine";
     return `Il y a ${weeks} semaines`;
   };
+
+  useEffect(() => {
+    const loadWatchlist = async () => {
+      setIsLoading(true);
+      try {
+        const [enrichedItems, userItems] = await Promise.all([
+          getEnrichedWatchlist(),
+          getAllWatchlist(),
+        ]);
+
+        const userMap = new Map(userItems.map((item) => [item.title, item]));
+
+        const items: EnrichedWatchlistItem[] = enrichedItems.map((item) => {
+          const userItem = userMap.get(item.title);
+          return {
+            id: item.id,
+            title: item.title,
+            cover: item.thumbnails,
+            genre: item.genres[0]?.name || "Unknown",
+            rating: item.mean,
+            totalChapters: parseInt(item.lastChapter) || 0,
+            readChapters: parseInt(item.lastChapterRead) || 0,
+            lastChapterRead: item.lastChapterRead || undefined,
+            status: (userItem?.status as WatchlistStatus) || "En cours",
+            lastRead: userItem?.lastRead
+              ? formatLastReadTime(userItem.lastRead)
+              : undefined,
+          };
+        });
+
+        setWatchlist(items);
+      } catch (error) {
+        console.error("Failed to load watchlist:", error);
+        setWatchlist([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadWatchlist();
+  }, []);
 
   const filteredWatchlist = useMemo(() => {
     return watchlist
@@ -169,28 +175,26 @@ const Watchlist = () => {
             return a.title.localeCompare(b.title);
           case "rating":
             return b.rating - a.rating;
-          case "progress":
-            return (
-              b.readChapters / b.totalChapters -
-              a.readChapters / a.totalChapters
-            );
-          default: // recently-read
+          default:
             return 0;
         }
       });
   }, [watchlist, searchQuery, filterStatus, sortBy]);
 
-  const handleRemoveFromWatchlist = (title: string) => {
-    removeFromWatchlist(title);
+  const handleRemoveFromWatchlist = async (title: string) => {
+    await removeFromWatchlist(title);
     setWatchlist((prev) => prev.filter((item) => item.title !== title));
   };
 
-  const handleStatusChange = (title: string, newStatus: WatchlistStatus) => {
-    updateStatus(title, newStatus);
+  const handleStatusChange = async (
+    title: string,
+    newStatus: WatchlistStatus
+  ) => {
+    await updateStatus(title, newStatus);
     setWatchlist((prev) =>
       prev.map((item) =>
-        item.title === title ? { ...item, status: newStatus } : item,
-      ),
+        item.title === title ? { ...item, status: newStatus } : item
+      )
     );
   };
 
@@ -222,23 +226,48 @@ const Watchlist = () => {
     <div className='min-h-screen bg-background'>
       <MangaNavigation />
 
-      <main className='container mx-auto px-4 py-8'>
+      <main className='container mx-auto px-4 py-6'>
         {/* Header */}
+        <Button
+          variant='outline'
+          size='sm'
+          onClick={() => navigate("/")}
+          className='hover:bg-manga-card mb-6 py-6 px-3'
+        >
+          <ArrowLeft className='w-4 h-4' />
+          Accueil
+        </Button>
         <div className='flex items-center gap-4 mb-8'>
-          <Button
-            variant='ghost'
-            size='sm'
-            onClick={() => navigate("/")}
-            className='hover:bg-manga-card'
-          >
-            <ArrowLeft className='w-4 h-4 mr-2' />
-            Back to Home
-          </Button>
-          <h1 className='text-3xl font-bold text-foreground'>My Watchlist</h1>
+          <h1 className='text-3xl font-bold text-foreground'>Ma Watchlist</h1>
           <Badge variant='secondary' className='ml-auto'>
-            {watchlist.length} manga
+            {watchlist.length} mangas
           </Badge>
         </div>
+
+        {/* Sync localStorage button */}
+        {showSyncButton && (
+          <div className='mb-6 p-4 bg-manga-card rounded-lg border border-primary/30'>
+            <div className='flex items-center justify-between gap-4'>
+              <div>
+                <p className='font-medium text-foreground'>
+                  Donnees locales detectees
+                </p>
+                <p className='text-sm text-muted-foreground'>
+                  Tu avais des donnees enregistrees avant la creation de ton
+                  compte. Synchronise-les pour ne rien perdre.
+                </p>
+              </div>
+              <Button
+                onClick={handleSyncLocalStorage}
+                disabled={isSyncing}
+                className='shrink-0'
+              >
+                <Upload className='w-4 h-4 mr-2' />
+                {isSyncing ? "Synchronisation..." : "Synchroniser"}
+              </Button>
+            </div>
+          </div>
+        )}
 
         {/* Status Overview */}
         <div className='grid grid-cols-2 md:grid-cols-4 gap-4 mb-8'>
@@ -252,13 +281,13 @@ const Watchlist = () => {
             <div className='text-2xl font-bold text-blue-400'>
               {getStatusCount("Terminé")}
             </div>
-            <div className='text-sm text-muted-foreground'>Terminé</div>
+            <div className='text-sm text-muted-foreground'>Termine</div>
           </div>
           <div className='bg-manga-card rounded-lg p-4 border border-border'>
             <div className='text-2xl font-bold text-yellow-400'>
               {getStatusCount("À lire")}
             </div>
-            <div className='text-sm text-muted-foreground'>À lire</div>
+            <div className='text-sm text-muted-foreground'>A lire</div>
           </div>
           <div className='bg-manga-card rounded-lg p-4 border border-border'>
             <div className='text-2xl font-bold text-gray-400'>
@@ -279,33 +308,32 @@ const Watchlist = () => {
               className='pl-10 bg-manga-card border-border focus:border-primary'
             />
           </div>
+          <div className='flex justify-between'>
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger className='w-40 bg-manga-card border-border'>
+                <Filter className='w-4 h-4 mr-2' />
+                <SelectValue placeholder='Filtrer par statut' />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value='all'>Tous les statuts</SelectItem>
+                <SelectItem value='En cours'>En cours</SelectItem>
+                <SelectItem value='Terminé'>Termine</SelectItem>
+                <SelectItem value='À lire'>A lire</SelectItem>
+                <SelectItem value='En pause'>En pause</SelectItem>
+              </SelectContent>
+            </Select>
 
-          <Select value={filterStatus} onValueChange={setFilterStatus}>
-            <SelectTrigger className='w-40 bg-manga-card border-border'>
-              <Filter className='w-4 h-4 mr-2' />
-              <SelectValue placeholder='Filtrer par statut' />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value='all'>Tous les statuts</SelectItem>
-              <SelectItem value='En cours'>En cours</SelectItem>
-              <SelectItem value='Terminé'>Terminé</SelectItem>
-              <SelectItem value='À lire'>À lire</SelectItem>
-              <SelectItem value='En pause'>En pause</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className='w-40 bg-manga-card border-border'>
-              <SelectValue placeholder='Sort by' />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value='recently-read'>Recently Read</SelectItem>
-              <SelectItem value='title'>Title A-Z</SelectItem>
-              <SelectItem value='rating'>Rating</SelectItem>
-              <SelectItem value='progress'>Progress</SelectItem>
-            </SelectContent>
-          </Select>
-
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger className='w-40 bg-manga-card border-border'>
+                <SelectValue placeholder='Sort by' />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value='recently-read'>Lu recement</SelectItem>
+                <SelectItem value='title'>Titre A-Z</SelectItem>
+                <SelectItem value='rating'>Note</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <div className='flex bg-manga-card rounded-lg border border-border'>
             <Button
               variant={viewMode === "list" ? "default" : "ghost"}
@@ -332,20 +360,20 @@ const Watchlist = () => {
             <div className='text-6xl mb-4'>📚</div>
             <h2 className='text-2xl font-bold text-foreground mb-2'>
               {searchQuery || filterStatus !== "all"
-                ? "No manga found"
-                : "Your watchlist is empty"}
+                ? "Aucun manga trouvé"
+                : "Votre watchlist est vide"}
             </h2>
             <p className='text-muted-foreground mb-6'>
               {searchQuery || filterStatus !== "all"
-                ? "Essayez d'ajuster vos critères de recherche ou de filtre"
-                : "Vous n'avez pas encore ajouté de mangas à votre watchlist"}
+                ? "Essayez d'ajuster vos criteres de recherche ou de filtre"
+                : "Vous n'avez pas encore ajoute de mangas a votre watchlist"}
             </p>
             {!searchQuery && filterStatus === "all" && (
               <Button
                 onClick={() => navigate("/")}
                 className='bg-primary hover:bg-primary/90'
               >
-                Browse Manga
+                Parcourir les mangas
               </Button>
             )}
           </div>

@@ -1,100 +1,75 @@
-export type WatchlistStatus = "À lire" | "En cours" | "Terminé" | "En pause";
+import type { WatchlistItem, WatchlistStatus } from "@/types/userdata.types";
+import * as userdataService from "@/services/userdata.service";
 
-export interface WatchlistItem {
-  title: string;
-  status: WatchlistStatus;
-  addedAt: number;
-  lastRead?: number;
-  lastChapterRead?: string;
-}
-
-const WATCHLIST_STORAGE_KEY = "manga-watchlist";
+export type { WatchlistItem, WatchlistStatus };
 
 export function useWatchlistStorage() {
-  const getAllWatchlist = (): WatchlistItem[] => {
+  const getAllWatchlist = async (): Promise<WatchlistItem[]> => {
     try {
-      const stored = localStorage.getItem(WATCHLIST_STORAGE_KEY);
-      return stored ? JSON.parse(stored) : [];
+      return await userdataService.getAllWatchlist();
     } catch {
       return [];
     }
   };
 
-  const getWatchlistItem = (mangaTitle: string): WatchlistItem | null => {
-    const watchlist = getAllWatchlist();
-    return watchlist.find((item) => item.title === mangaTitle) || null;
+  const getWatchlistItem = async (
+    mangaTitle: string
+  ): Promise<WatchlistItem | null> => {
+    try {
+      return await userdataService.getWatchlistItem(mangaTitle);
+    } catch {
+      return null;
+    }
   };
 
-  const isInWatchlist = (mangaTitle: string): boolean => {
-    return getWatchlistItem(mangaTitle) !== null;
+  const isInWatchlist = async (mangaTitle: string): Promise<boolean> => {
+    const item = await getWatchlistItem(mangaTitle);
+    return item !== null;
   };
 
-  const addToWatchlist = (
+  const addToWatchlist = async (
     mangaTitle: string,
     status: WatchlistStatus = "À lire",
-    lastChapterRead?: string,
-  ): void => {
-    const watchlist = getAllWatchlist();
-
-    // Check if already exists
-    const existingIndex = watchlist.findIndex(
-      (item) => item.title === mangaTitle,
-    );
-    if (existingIndex !== -1) {
-      // Update existing item
-      watchlist[existingIndex] = {
-        ...watchlist[existingIndex],
-        status,
-        lastRead: Date.now(),
-        ...(lastChapterRead && { lastChapterRead }),
-      };
-    } else {
-      // Add new item
-      const newItem: WatchlistItem = {
-        title: mangaTitle,
-        status,
-        addedAt: Date.now(),
-        lastRead: Date.now(),
-        ...(lastChapterRead && { lastChapterRead }),
-      };
-      watchlist.push(newItem);
-    }
-
-    localStorage.setItem(WATCHLIST_STORAGE_KEY, JSON.stringify(watchlist));
-  };
-
-  const updateWatchlistItem = (
-    mangaTitle: string,
-    updates: Partial<Omit<WatchlistItem, "title" | "addedAt">>,
-  ): void => {
-    const watchlist = getAllWatchlist();
-    const index = watchlist.findIndex((item) => item.title === mangaTitle);
-
-    if (index !== -1) {
-      watchlist[index] = {
-        ...watchlist[index],
-        ...updates,
-        lastRead: Date.now(),
-      };
-      localStorage.setItem(WATCHLIST_STORAGE_KEY, JSON.stringify(watchlist));
+    lastChapterRead?: string
+  ): Promise<void> => {
+    try {
+      await userdataService.addToWatchlist(mangaTitle, status, lastChapterRead);
+    } catch {
+      // silently fail
     }
   };
 
-  const removeFromWatchlist = (mangaTitle: string): void => {
-    const watchlist = getAllWatchlist();
-    const filtered = watchlist.filter((item) => item.title !== mangaTitle);
-    localStorage.setItem(WATCHLIST_STORAGE_KEY, JSON.stringify(filtered));
-  };
-
-  const updateStatus = (mangaTitle: string, status: WatchlistStatus): void => {
-    updateWatchlistItem(mangaTitle, { status });
-  };
-
-  const updateLastChapterRead = (
+  const updateWatchlistItem = async (
     mangaTitle: string,
-    chapterNumber: string,
-  ): void => {
-    updateWatchlistItem(mangaTitle, {
+    updates: Partial<Omit<WatchlistItem, "title" | "addedAt">>
+  ): Promise<void> => {
+    try {
+      await userdataService.updateWatchlistItem(mangaTitle, updates);
+    } catch {
+      // silently fail
+    }
+  };
+
+  const removeFromWatchlist = async (mangaTitle: string): Promise<void> => {
+    try {
+      await userdataService.removeFromWatchlist(mangaTitle);
+    } catch {
+      // silently fail
+    }
+  };
+
+  const updateStatus = async (
+    mangaTitle: string,
+    status: WatchlistStatus
+  ): Promise<void> => {
+    await updateWatchlistItem(mangaTitle, { status });
+  };
+
+  const updateLastChapterRead = async (
+    mangaTitle: string,
+    chapterNumber: string
+  ): Promise<void> => {
+    await updateWatchlistItem(mangaTitle, {
       lastChapterRead: chapterNumber,
       lastRead: Date.now(),
     });
