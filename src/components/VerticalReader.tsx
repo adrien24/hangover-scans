@@ -45,7 +45,7 @@ const VerticalReader = memo(
                 src={`${
                   imageScan.url.includes("lelmanga")
                     ? `https://hangoverscans.fr/compressImage.php?imgurl=${imageScan.url}`
-                    : imageScan.url
+                    : `https://anime-sama.to${imageScan.url}`
                 }`}
                 ref={(el) => {
                   if (el?.complete) handleImageLoad(index);
