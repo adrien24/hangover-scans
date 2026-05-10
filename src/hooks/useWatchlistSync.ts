@@ -11,8 +11,7 @@ interface UseWatchlistSyncOptions {
 
 /**
  * Reacts to chapter opening:
- * - adds the manga to the watchlist (status "En cours") if it isn't yet
- * - refreshes lastChapterRead / lastRead
+ * - refreshes lastChapterRead / lastRead (only if already in watchlist)
  * - bumps status to "Terminé" when all chapters are read
  *
  * Operates from the already-loaded userContext (no extra GETs).
@@ -23,7 +22,7 @@ export function useWatchlistSync({
   totalChapters,
   userContext,
 }: UseWatchlistSyncOptions) {
-  const { addToWatchlist, updateWatchlistItem } = useWatchlistStorage();
+  const { updateWatchlistItem } = useWatchlistStorage();
 
   useEffect(() => {
     if (!mangaTitle || !chapterNumber || !userContext) return;
@@ -31,10 +30,7 @@ export function useWatchlistSync({
     const currentChapter = String(chapterNumber);
     const { watchlist, bookmark } = userContext;
 
-    if (!watchlist.inWatchlist) {
-      addToWatchlist(mangaTitle, "En cours", currentChapter);
-      return;
-    }
+    if (!watchlist.inWatchlist) return;
 
     let newStatus: WatchlistStatus = watchlist.status ?? "En cours";
     if (bookmark && totalChapters) {
