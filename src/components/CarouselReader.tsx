@@ -8,7 +8,10 @@ import {
   type CarouselApi,
 } from "@/components/ui/carousel";
 import ImageLoader from "@/components/ImageLoader";
+import ScanImage from "@/components/ScanImage";
+import ChapterUnavailable from "@/components/ChapterUnavailable";
 import { useBookmarkStorage } from "@/hooks/useBookmarkStorage";
+import { useImagesSettled } from "@/hooks/useImagesSettled";
 
 interface CarouselReaderProps {
   images: { url: string; loaded: boolean }[];
@@ -30,10 +33,9 @@ const CarouselReader = memo(
     chapterId,
     currentPage = 0,
   }: CarouselReaderProps) => {
-    const [loadedCount, setLoadedCount] = useState(0);
     const [api, setApi] = useState<CarouselApi>();
     const { saveBookmark } = useBookmarkStorage();
-    const loadedIndices = useRef(new Set<number>());
+    const { markSettled, ready, isEmpty } = useImagesSettled(images);
 
     const saveBookmarkRef = useRef(saveBookmark);
     saveBookmarkRef.current = saveBookmark;
@@ -42,19 +44,10 @@ const CarouselReader = memo(
     const pendingPageRef = useRef<number | null>(null);
     const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    useEffect(() => {
-      setLoadedCount(0);
-      loadedIndices.current.clear();
-    }, [images]);
-
     const handleImageLoad = (index: number) => {
-      if (loadedIndices.current.has(index)) return;
-      loadedIndices.current.add(index);
       onImageLoad(index);
-      setLoadedCount((prev) => prev + 1);
+      markSettled(index);
     };
-
-    const allImagesLoaded = images.length > 0 && loadedCount === images.length;
 
     // Sauvegarder la page actuelle du carousel (debounced + flush au démontage)
     useEffect(() => {
@@ -99,9 +92,9 @@ const CarouselReader = memo(
 
     // Aller a la page sauvegardee au chargement (apres que toutes les images soient chargees)
     useEffect(() => {
-      if (!api || !allImagesLoaded) return;
+      if (!api || !ready) return;
       api.scrollTo(currentPage);
-    }, [api, allImagesLoaded, currentPage]);
+    }, [api, ready, currentPage]);
 
     // Desactiver le swipe d'Embla quand le navigateur est zoome (scale > 1)
     // et le reactiver uniquement quand on revient au zoom normal.
@@ -137,9 +130,11 @@ const CarouselReader = memo(
       };
     }, [api]);
 
+    if (isEmpty) return <ChapterUnavailable onClick={onClick} />;
+
     return (
       <>
-        {!allImagesLoaded && <ImageLoader />}
+        {!ready && <ImageLoader />}
         <div
           className='w-full h-screen flex items-center justify-center'
           onClick={onClick}
@@ -152,18 +147,13 @@ const CarouselReader = memo(
                   className='flex items-center justify-center'
                 >
                   <div className='w-full h-screen flex items-center justify-center overflow-hidden'>
-                    <img
-                      src={`${
-                        imageScan.url.includes("lelmanga")
-                          ? `https://hangoverscans.fr/compressImage.php?imgurl=${imageScan.url}`
-                          : `https://anime-sama.to${imageScan.url}`
-                      }`}
-                      ref={(el) => {
-                        if (el?.complete) handleImageLoad(index);
-                      }}
-                      alt={`Page ${index + 1}`}
+                    <ScanImage
+                      key={imageScan.url}
+                      url={imageScan.url}
+                      index={index}
                       className='max-h-screen max-w-full object-contain'
-                      onLoad={() => handleImageLoad(index)}
+                      onLoad={handleImageLoad}
+                      onError={markSettled}
                     />
                   </div>
                 </CarouselItem>

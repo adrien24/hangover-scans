@@ -48,6 +48,8 @@ export function useScansController(id?: string | number, title?: string) {
         setUserContext(userContext);
       } catch (err) {
         console.error("Failed to load scans in hook", err);
+        // Ne pas laisser les pages du chapitre précédent : le lecteur affichera « aucune page »
+        if (mounted) setImagesScans([]);
       } finally {
         if (mounted) setIsLoading(false);
       }
